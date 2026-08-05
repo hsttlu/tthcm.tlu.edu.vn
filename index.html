@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quiz test TTHCM</title>
+    <link rel="icon" type="image/jpeg" href="V1.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        indigo: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body, html { 
+            background-color: #f8fafc; 
+            color: #334155; 
+            overflow-x: clip; 
+            overscroll-behavior-x: none;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        
+        .nav-btn { transition: all 0.15s; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+
+    <!-- KHỞI TẠO FIREBASE AUTH Ở ĐÂY -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCULfhNzsxkbCncbWSjYRYqiR0jBSBoqYI",
+            authDomain: "quiz-tlu.firebaseapp.com",
+            databaseURL: "https://quiz-tlu-default-rtdb.firebaseio.com",
+            projectId: "quiz-tlu",
+            storageBucket: "quiz-tlu.firebasestorage.app",
+            messagingSenderId: "776984711610",
+            appId: "1:776984711610:web:9b20bd6bc3e2d49508cd83",
+            measurementId: "G-C3NNCVP452"
+        };
+
+        if (firebaseConfig.projectId === "THAY_BANG_PROJECT_ID_CUA_BAN") {
+            console.warn("⚠️ BẠN CHƯA CẤU HÌNH FIREBASE! Vui lòng dán cấu hình thật vào biến firebaseConfig để tính năng Admin hoạt động.");
+            window.firebaseAuth = null;
+            window.db = null;
+        } else {
+            try {
+                const app = initializeApp(firebaseConfig);
+                
+                window.firebaseAuth = getAuth(app);
+                window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+                window.signOut = signOut;
+                
+                window.db = getFirestore(app);
+                window.doc = doc;
+                window.setDoc = setDoc;
+                window.onSnapshot = onSnapshot;
+            } catch (error) {
+                console.error("Lỗi khởi tạo Firebase:", error);
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-violet-200 selection:text-violet-900">
+
+    <header class="bg-white border-b border-slate-100 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 group">
+                <div onclick="goHome()" class="cursor-pointer bg-violet-600 text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm group-hover:bg-violet-700 transition-colors" title="Quay về trang chủ">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                
+                <h1 onclick="goHome()" class="cursor-pointer text-lg sm:text-xl font-bold text-slate-800 group-hover:text-violet-700 transition-colors" title="Quay về trang chủ">Trắc nghiệm TTHCM TLU</h1>
+            </div>
+            
+            <div class="flex items-center gap-3 sm:gap-4">
+                <div id="header-timer" class="hidden items-center gap-1.5 sm:gap-2 bg-violet-50 text-violet-700 px-3 py-1 sm:px-4 py-1.5 rounded-lg font-mono font-bold text-sm sm:text-lg transition-colors">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span id="time-display">40:00</span>
+                </div>
+                <img onclick="openAdminLogin()" src="quocky.png" alt="Admin" class="cursor-pointer w-8 h-[22px] sm:w-10 sm:h-[28px] object-cover rounded-sm shadow-sm hover:opacity-80 transition-opacity" title="Khu vực quản trị">
+            </div>
+        </div>
+    </header>
+
+    <main id="app-root" class="flex-grow w-full flex flex-col">
+        <!-- JS render content here -->
+    </main>
+
+    <div id="global-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-xl max-w-[360px] w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-300" id="modal-panel">
+            <div class="p-4 sm:p-5 text-center" id="modal-body">
+                <!-- Modal content -->
+            </div>
+        </div>
+    </div>
+
+    <footer class="w-full bg-slate-50 border-t border-slate-200 py-6 mt-auto shrink-0">
+        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+            <p>Copyright © 2026 HST-66KTH1. All rights reserved.</p>
+            <p class="mt-1">
+                Mọi góp ý xin vui lòng gửi về email: 
+                <span class="text-violet-600 font-medium">
+                    2451182956@e.tlu.edu.vn
+                </span>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        const ORIGINAL_QUESTIONS = [
+            { id: 1, q: "Chọn phương pháp đúng nhất về phương pháp lịch sử trong nghiên cứu tư tưởng Hồ Chí Minh?", opts: ["A. Nghiên cứu thực tiễn, coi trọng tổng kết thực tiễn, quán triệt quan điểm lý luận gắn với thực tiễn", "B. Nghiên cứu một cách tổng quát nhằm tìm ra được cái bản chất vốn có của sự vật, hiện tượng và khái quát thành lý luận", "C. Nghiên cứu sự vật và hiện tượng theo quá trình phát sinh, tồn tại, phát triển", "D. Nghiên cứu tiến trình vận động, sự vật hiện tượng của lịch sử Đảng"], ans: 2 },
+            { id: 2, q: "Theo Hồ Chí Minh, cách mạng giải phóng dân tộc ở các nước thuộc địa phải được tiến hành như thế nào?", opts: ["A. Chủ động không nên trông chờ, ỷ lại vào cách mạng vô sản ở chính quốc", "B. Phải phát huy tinh thần độc lập, tự chủ, tự lực, tự cường 'lấy sức ta mà giải phóng cho ta'", "C. Bằng sức mạnh của dân tộc mà giải phóng cho dân tộc mình thoát khỏi kiếp ngựa trâu, nô lệ", "D. Tất cả phương án"], ans: 3 },
+            { id: 3, q: "Hoàn chỉnh câu sau: Cuộc cách mạng vô sản ở nước Nga thành công đã nêu một tấm gương sáng về sự giải phóng dân tộc bị áp bức mở ra trước mắt họ thời đại của các mạng chống [...] thời đại giải phóng dân tộc\"", opts: ["A. Phong kiến", "B. Đế quốc", "C. Nông dân", "D. Công nhân"], ans: 1 },
+            { id: 4, q: "Hoàn chỉnh câu sau: 'Công nông là gốc của cách mạng, còn học trò, nhà buôn nhỏ, điền chủ nhỏ cũng bị tư bản áp bức, song không cực khổ bằng công nông: 3 hạng ấy chỉ là [...] cách mệnh của công nông thôi'", opts: ["A. Bạn đồng minh", "B. Người ủng hộ", "C. Người dẫn đường", "D. Bầu bạn"], ans: 3 },
+            { id: 5, q: "Hoàn chỉnh câu sau: 'Cộng sản có 2 giai đoạn, giai đoạn thấp tức là [1], giai đoạn cao là [2]' (Trong tác phẩm: Thưởng thức chính trị-45. CNXH)", opts: ["A. Chủ nghĩa xã hội, Chủ nghĩa cộng sản", "B. Thời kỳ quá độ, Chủ nghĩa cộng sản", "C. Chủ nghĩa tư bản, Chủ nghĩa cộng sản", "D. Cách mạng giải phóng dân tộc, Chủ nghĩa xã hội"], ans: 0 },
+            { id: 6, q: "Nguyễn Ái Quốc đọc 'Sơ thảo lần thứ nhất những luận cương về vấn đề dân tộc và thuộc địa của Lênin' vào thời gian nào?", opts: ["A. Tháng 2/1921", "B. Tháng 7/1920", "C. Tháng 12/1920", "D. Tháng 6/1919"], ans: 1 },
+            { id: 7, q: "Hoàn chỉnh câu sau: Khi trả lời ông Vaxiđéprao, thông tín viên hãng Roitơ Hồ Chí Minh khẳng định: 'Độc lập nghĩa là chúng tôi điều khiển lấy mọi công việc của chúng tôi, [...]'", opts: ["A. Không có sự can thiệp ở ngoài vào", "B. Phù hợp với điều kiện nước tôi", "C. Tự quyết định con đường phát triển của chúng tôi", "D. Tự lựa chọn con đường phát triển cho phù hợp với xu thế của thời đại"], ans: 0 },
+            { id: 8, q: "Khi nghiên cứu về các cuộc cách mạng tư sản, Hồ Chí Minh xác định đó là những cuộc cách mạng như thế nào?", opts: ["A. Thắng lợi", "B. Chưa trọn vẹn", "C. Không đến nơi", "D. Không thành công"], ans: 2 },
+            { id: 9, q: "Chọn đáp án đúng nhất về nội dung chủ nghĩa Tam Dân của Tôn Trung Sơn", opts: ["A. Dân tộc độc lập, dân quyền tự do, dân sinh hạnh phúc", "B. Tự do, bình đẳng, bác ái", "C. Độc lập dân tộc gắn liền với chủ nghĩa xã hội", "D. Độc lập, tự do, hạnh phúc"], ans: 0 },
+            { id: 10, q: "Lựa chọn đáp án đúng cho nhận định sau: Việc tiếp thu Chủ nghĩa Mác-Lênin ở Hồ Chí Minh diễn ra trên nền tảng của:", opts: ["A. Sự thông minh, nhạy bén, đạo đức, phẩm chất của Người", "B. Những tri thức văn hóa tinh túy được chắt lọc, hấp thụ; sự thông minh, nhạy bén của Người", "C. Những tri thức văn hóa tinh túy, một vốn chính trị và vốn hiểu biết phong phú", "D. Một vốn chính trị, vốn hiểu biết phong phú; sự thông minh, nhạy bén của Người"], ans: 2 },
+            { id: 11, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: Đối với cán bộ, đảng viên, Hồ Chí Minh nhấn mạnh: “Trước mặt quần chúng, không phải ta cứ viết lên trán chữ [...] mà ta được họ yêu mến. Quần chúng chỉ quý mến những người có [...]”", opts: ["A. 'Liêm khiết', đạo đức", "B. 'Cộng sản', tư cách, đạo đức", "C. 'Cộng sản', đạo đức cách mạng", "D. 'Liêm chính', đạo đức cách mạng"], ans: 1 },
+            { id: 12, q: "Theo Hồ Chí Minh, các lực lượng của đoàn kết quốc tế là:", opts: ["A. Phong trào cộng sản và công nhân thế giới", "B. Phong trào đấu tranh giải phóng dân tộc", "C. Tất cả phương án", "D. Các lực lượng tiến bộ, những người yêu chuộng hòa bình, dân chủ, tự do, công lý"], ans: 2 },
+            { id: 13, q: "Các phong trào yêu nước Việt Nam những năm cuối thế kỷ XIX, đầu thế kỷ XX diễn ra theo những khuynh hướng nào?", opts: ["A. Khuynh hướng dân chủ tư sản", "B. Khuynh hướng phong kiến", "C. Khuynh hướng phong kiến và vô sản", "D. Khuynh hướng phong kiến và dân chủ tư sản"], ans: 3 },
+            { id: 14, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: “Chế độ ta là chế độ dân chủ, tư tưởng phải được tự do. Tự do là thế nào? Đối với mọi vấn đề, mọi người tự do bày tỏ ý kiến của mình, góp phần tìm ra [...]”", opts: ["A. Nguyên tắc", "B. Lý lẽ", "C. Chân lý", "D. Thực tiễn"], ans: 2 },
+            { id: 15, q: "Theo Hồ Chí Minh, trong Nhà nước pháp quyền nhân nghĩa, pháp luật có tính?", opts: ["A. Nhân văn", "B. Nhân văn, khuyến thiện", "C. Khuyến thiện", "D. Nhân đạo"], ans: 1 },
+            { id: 16, q: "Sáng tạo lớn nhất trong tư tưởng Hồ Chí Minh về cách mạng giải phóng dân tộc thuộc địa là gì?", opts: ["A. Cách mạng giải phóng dân tộc được tiến hành chủ động, sáng tạo và có khả năng giành thắng lợi trước cách mạng vô sản ở chính quốc", "B. Tiến hành bằng con đường bạo lực cách mạng", "C. Đảng Cộng sản lãnh đạo", "D. Xác định lực lượng cách mạng giải phóng dân tộc là toàn dân tộc"], ans: 0 },
+            { id: 17, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: “Nền kinh tế mà chúng ta xây dựng cần phải phát triển toàn diện các ngành với những ngành chủ yếu là: công - nông - thương nghiệp; trong đó, [...] là hai cái chân của nền kinh tế nước nhà”", opts: ["A. Nông nghiệp và thương nghiệp", "B. Công nghiệp nặng và nông nghiệp", "C. Nông nghiệp và công nghiệp nhẹ", "D. Công nghiệp và nông nghiệp"], ans: 3 },
+            { id: 18, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: “Chúng ta đã hy sinh làm cách mệnh, thì nên làm cho đến nơi, nghĩa là làm sao cách mệnh rồi thì quyền giao cho dân chúng [...], chớ để trong tay một bọn ít người”", opts: ["A. Đông đảo", "B. Số nhiều", "C. Yêu nước", "D. Tiến bộ"], ans: 1 },
+            { id: 19, q: "Câu nói sau được trích trong tác phẩm nào của Hồ Chí Minh? “Bồi dưỡng thế hệ cách mạng cho đời sau là việc làm rất quan trọng và cần thiết”", opts: ["A. Đạo đức cách mạng", "B. Đường cách mệnh", "C. Sửa đổi lối làm việc", "D. Di chúc"], ans: 3 },
+            { id: 20, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: Đại hội VII (1991) của Đảng khẳng định: “Lấy chủ nghĩa Mác-Lênin và Tư tưởng Hồ Chí Minh làm nền tảng tư tưởng, [...]”", opts: ["A. Kim chỉ nam cho hành động của Đảng và nhân dân", "B. Kim chỉ nam cho hành động của Đảng", "C. Kim chỉ nam cho hành động", "D. Kim chỉ nam"], ans: 1 },
+            { id: 21, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: Đoàn kết là sức mạnh của chúng ta, đoàn kết là [...] của chúng ta”", opts: ["A. Cái gốc", "B. Thành công", "C. Vẻ vang", "D. Thắng lợi"], ans: 3 },
+            { id: 22, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: “[...] có vững thì cây mới bền. Xây lầu thắng lợi trên nền [...]”", opts: ["A. Gốc; nông dân", "B. Gốc; nhân dân", "C. Gốc; công nhân", "D. Rễ; công nông"], ans: 1 },
+            { id: 23, q: "Theo Hồ Chí Minh, đối với một quốc gia, cần, kiệm, liêm, chính là thước đo:", opts: ["A. Bề dày của truyền thống đạo đức của dân tộc", "B. Sự giàu có của dân tộc Việt Nam", "C. Sự giàu có về vật chất, vững mạnh về tinh thần, thể hiện sự văn minh tiến bộ của dân tộc", "D. Sự phong phú của truyền thống văn hóa lâu đời của dân tộc"], ans: 2 },
+            { id: 24, q: "Trong nội dung xây dựng kinh tế thời kỳ quá độ lên chủ nghĩa xã hội, Hồ Chí Minh đã chủ trương xây dựng những cơ cấu kinh tế nào?", opts: ["A. Cơ cấu ngành", "B. Cơ cấu thành phần", "C. Cơ cấu vùng, lãnh thổ", "D. Tất cả phương án"], ans: 3 },
+            { id: 25, q: "Trong quá trình nghiên cứu lý luân Mác-Lênin và thực tế đấu tranh, dần dần Nguyễn Ái Quốc đã hiểu ra được điều gì rất quan trọng về con đường cứu nước?", opts: ["A. Chỉ có chủ nghĩa xã hội, chủ nghĩa cộng sản mới giải phóng được các dân tộc bị áp bức và những người lao động trên thế giới khỏi ách đô hộ", "B. Chỉ có con đường cách mạng tư sản mới giải phóng được các dân tộc bị áp bức", "C. Chỉ có học tập theo cách mệnh Mỹ", "D. Chỉ có đi theo CMT10 Nga"], ans: 0 },
+            { id: 26, q: "Trong tác phẩm Nâng cao đạo đức cách mạng, quét sạch chủ nghĩa cá nhân, theo quan điểm của Hồ Chí Minh một trong những yêu cầu mà mỗi cán bộ đảng viên cần phải làm để nâng cao đạo đức cách mạng là:", opts: ["A. Phải đặt lợi ích của cách mạng, của giai cấp nông dân lên trên hết", "B. Phải đặt lợi ích của cách mạng, của các giai cắp lên trên hết, trước hết", "C. Phải đặt lợi ích của cách mạng, của giai cắp công nhân lên trên hết", "D. Phải đặt lợi ích của cách mạng, của Đảng, của nhân dân lên trên hết, trước hết"], ans: 3 },
+            { id: 27, q: "Theo Hồ Chí Minh, 'd dân là chủ' có nghĩa là:", opts: ["A. Đề cập tới vị thế của dân", "B. Đề cập tới năng lực của dân", "C. Đề cập tới trách nhiệm của dân", "D. Đề cập tới vai trò của dân"], ans: 0 },
+            { id: 28, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: “Dân chủ là của quý báu nhất của nhân dân, [...] là cái khóa, cái cửa để đề phòng kẻ phá hoại. Thế thì dân chủ cũng cần phải có chuyên chính để giữ gìn lấy dân chủ”.", opts: ["A. Cách mạng", "B. Chuyên chính", "C. Nhà nước", "D. Chính quyền"], ans: 1 },
+            { id: 29, q: "Nguyên tắc quan trọng bậc nhất trong xây dựng một nền đạo đức mới theo tư tưởng Hồ Chí Minh là:", opts: ["A. Nói đi đôi với làm, phải nêu gương về đạo đức", "B. Xây đi đôi với chống", "C. Tu dưỡng đạo đức suốt đời", "D. Phải tạo thành phong trào quần chúng rộng rãi"], ans: 0 },
+            { id: 30, q: "Hoàn chỉnh câu sau: 'Chủ nghĩa Lênin đối với chúng ta, những người cách mạng và nhân dân Việt Nam, không những là [...], không những là cái kim chỉ nam, mà còn là mặt trời soi sáng con đường chúng ta đi tới thắng lợi cuối cùng, đi tới chủ nghĩa xã hội và chủ nghĩa cộng sản'.", opts: ["A. Lý luận thần kỳ", "B. Định hướng thần kỳ", "C. Cái cẩm nang thần kỳ", "D. Học thuyết thần kỳ"], ans: 2 },
+            { id: 31, q: "Hồ Chí Minh đã khẳng định: “Khổng Tử, Giêxu, Mác, Tôn Dật Tiên có điểm chung là:", opts: ["A. Là những người có tầm ảnh hưởng lớn", "B. Là những nhà tư tưởng lỗi lạc", "C. Mưu cầu hạnh phúc cho loài người, mưu phúc lợi cho xã hội", "D. Yêu nước, thương dân"], ans: 2 },
+            { id: 32, q: "Ngày 6/6/1938, Hồ Chí Minh gửi thư cho một lãnh đạo Quốc tế Cộng sản và đề nghị về điều gì?", opts: ["A. Được trở thành Trưởng Ban nghiên cứu thuộc địa", "B. Được hoạt động ở nước ngoài", "C. Được trở về nước để hoạt động", "D. Tiếp tục học và nghiên cứu"], ans: 2 },
+            { id: 33, q: "Hoàn chỉnh câu sau: Trong bản Di chúc, điều mong muốn cuối cùng của Hồ Chí Minh là xây dựng một nước Việt Nam [...]", opts: ["A. Dân chủ và giàu mạnh, góp phần xứng đáng vào sự nghiệp cách mạng thế giới", "B. Tất cả phương án", "C. Thống nhất, độc lập", "D. Hòa bình, thống nhất, độc lập, dân chủ và giàu mạnh..."], ans: 3 },
+            { id: 34, q: "Trong phát triển kinh tế, Hồ Chí Minh nhấn mạnh việc tăng năng suất lao động phải dựa trên cơ sở:", opts: ["A. Tiến hành tập thể hóa xã hội chủ nghĩa", "B. Tiến hành công nghiệp hóa xã hội chủ nghĩa", "C. Tiến hành công nghiệp, nông nghiệp và thương nghiệp", "D. Tiến hành công nghiệp và nông nghiệp"], ans: 1 },
+            { id: 35, q: "Hồ Chí Minh nói 'Dân khí mạnh thì quân lính nào, súng ống nào cũng không chống lại nổi' là nhằm khẳng định vai trò quan trọng của ai trong đấu tranh cách mạng?", opts: ["A. Quần chúng nhân dân", "B. Liên minh giữa giai cấp công nhân với nông dân", "C. Giai cấp công nhân", "D. Giai cấp nông dân"], ans: 0 },
+            { id: 36, q: "Hồ Chí Minh dùng hình tượng gì để nói về mối quan hệ cách mạng giải phóng dân tộc ở thuộc địa và cách mạng vô sản ở chính quốc?", opts: ["A. Con bạch tuộc", "B. Hai con chim đại bàng", "C. Hai cái cánh của con chim", "D. Con đỉa hai vòi"], ans: 2 },
+            { id: 37, q: "Thời kỳ Hồ Chí Minh vượt qua thử thách, kiên định giữ vững đường lối, phương pháp cách mạng Việt Nam đúng đắn, sáng tạo là:", opts: ["A. Thời kỳ từ năm 1921-1930", "B. Thời kỳ từ năm 1941-1969", "C. Thời kỳ từ năm 1911-1920", "D. Thời kỳ từ năm 1930-1941"], ans: 3 },
+            { id: 38, q: "Hoàn chỉnh định nghĩa tư tưởng Hồ Chí Minh: “Tư tưởng Hồ Chí Minh...; là kết quả của sự vận dụng và phát triển sáng tạo chủ nghĩa Mác-Lênin vào điều kiện cụ thể của nước ta [...]...”", opts: ["A. Kế thừa và phát triển các giá trị truyền thống tốt đẹp của dân tộc, tiếp thu tinh hoa văn hóa nhân loại", "B. Phát triển các giá trị truyền thống tốt đẹp của dân tộc, tiếp thu tinh hoa văn hóa phương Đông", "C. Kế thừa các giá trị truyền thống tốt đẹp của dân tộc, tiếp thu tinh hoa văn hóa phương Tây", "D. Tiếp thu tinh hoa văn hóa nhân loại"], ans: 0 },
+            { id: 39, q: "'Công nông là gốc cách mạng, còn học trò, nhà buôn nhỏ, điền chủ nhỏ cũng bị tư bản áp bức, song không cực khổ bằng công nông; 3 hạng ấy chỉ là bầu bạn cách mệnh của công nông thôi', quan điểm trên đề cập đến vấn đề gì?", opts: ["A. Lực lượng cách mạng", "B. Mục tiêu của cách mạng", "C. Phương pháp cách mạng", "D. Nhiệm vụ cách mạng"], ans: 0 },
+            { id: 40, q: "Nguyên nhân trực tiếp dẫn đến sự thất bại của các phong trào yêu nước theo khuynh hướng dân chủ tư sản là gì?", opts: ["A. Do giai cấp tư sản chưa đủ lực lượng", "B. Chưa có đường lối và phương pháp cách mạng đúng đắn", "C. Do giai cấp tư sản Việt Nam còn non yếu", "D. Các tổ chức, giai cấp không có người đứng đầu lãnh đạo, hệ tư tưởng không phù hợp"], ans: 1 },
+            { id: 41, q: "Hoàn chỉnh câu sau: 'Tôi chỉ có một sự ham muốn, ham muốn tột bậc, là làm sao cho nước ta được hoàn toàn độc lập, dân ta được hoàn toàn tự do, đồng bào ai cũng có [...]'", opts: ["A. Độc lập, tự do", "B. Tất cả phương án", "C. Hạnh phúc", "D. Cơm ăn áo mặc, ai cũng được học hành"], ans: 3 },
+            { id: 42, q: "Hồ Chí Minh đã tiếp thu giá trị tích cực nào trong bản Tuyên ngôn độc lập nước Mỹ (1776)?", opts: ["A. Những giá trị về quyền sống, quyền tự do, quyền mưu cầu hạnh phúc", "B. Những giá trị về quyền tự do, quyền sung sướng, quyền mưu cầu hạnh phúc", "C. Những giá trị về tự do, bình đẳng, bác ái", "D. Những giá trị về dân chủ, tự do, hạnh phúc"], ans: 0 },
+            { id: 43, q: "Quan điểm của Hồ Chí Minh đối với những nhà tư sản công thương trong phát triển kinh tế nhiều thành phần là:", opts: ["A. Không xóa bỏ quyền sở hữu về tư liệu sản xuất và của cải khác của họ; hướng dẫn họ hoạt động làm lợi cho quốc kế dân sinh...", "B. Đánh đổ họ với tư cách là một giai cấp bóc lột", "C. Xóa bỏ quyền sở hữu về tư liệu sản xuất của họ, đưa họ vào kinh tế tập thể", "D. Bảo hộ quyền sở hữu về tư liệu sản xuất, ra sức hướng dẫn và giúp họ cải tiến cách làm ăn..."], ans: 0 },
+            { id: 44, q: "Đáp án nào dưới đây đề cập đến ý nghĩa của việc học tập môn học Tư tưởng Hồ Chí Minh đối với sinh viên?", opts: ["A. Kiên định mục tiêu và con đường cách mạng mà Hồ Chí Minh đã xác định", "B. Phát huy sức mạnh dân chủ trong xã hội", "C. Tinh thần đấu tranh chống chủ nghĩa đế quốc", "D. Bồi dưỡng phẩm chất đạo đức cách mạng và rèn luyện bản lĩnh chính trị"], ans: 3 },
+            { id: 45, q: "Theo Hồ Chí Minh, nguyên tắc phân phối trong chủ nghĩa xã hội là:", opts: ["A. Làm theo năng lực, hưởng theo nhu cầu", "B. Phân phối theo lao động", "C. Làm theo năng lực, hưởng theo lao động", "D. Phân phối bình quân cho tất cả mọi người"], ans: 2 },
+            { id: 46, q: "Hồ Chí Minh kế thừa, đổi mới tư tưởng nào của Nho giáo để quản lý xã hội?", opts: ["A. Tư tưởng nhân trị, pháp trị", "B. Đức trị, pháp trị", "C. Tư tưởng nhân trị, đức trị", "D. Tư tưởng nhân văn"], ans: 2 },
+            { id: 47, q: "Sự kiện nào làm cho Nguyễn Ái Quốc hoàn toàn tin theo Lênin, tin theo Quốc tế thứ ba?", opts: ["A. Thất bại của chủ nghĩa thực dân - đế quốc trên toàn thế giới", "B. Đọc Sơ thảo lần thứ nhất những luận cương về vấn đề dân tộc và vấn đề thuộc địa", "C. Tất cả phương án", "D. Sự thành công của cách mạng do Quốc tế thứ II lãnh đạo"], ans: 1 },
+            { id: 48, q: "Trong nghiên cứu tư tưởng Hồ Chí Minh, ngoài các phương pháp luận chung, cần đặc biệt chú ý sử dụng các phương pháp cụ thể nào?", opts: ["A. Phương pháp lịch sử, logic, phân tích, tổng hợp, thống kê, trắc lượng, văn bản học, điều tra điền dã...", "B. Phân tích, tổng hợp, thống kê, trắc lượng...", "C. Phương pháp liên ngành khoa học xã hội nhân văn, lý luận chính trị", "D. Phương pháp lịch sử, logic, liên ngành, so sánh, đối chiếu"], ans: 0 },
+            { id: 49, q: "Theo Hồ Chí Minh, cách mạng giải phóng dân tộc phải được tiến hành một cách chủ động, sáng tạo và có khả năng giành thắng lợi trước cách mạng vô sản ở chính quốc, bởi vì:", opts: ["A. Các nước thuộc địa có sự giúp đỡ của Quốc tế cộng sản", "B. Lực lượng cách mạng ở thuộc địa đông và mạnh hơn lực lượng cách mạng ở chính quốc", "C. Nọc độc và sức sống của con rắn độc tư bản chủ nghĩa đang tập trung ở các thuộc địa hơn ở chính quốc", "D. Kẻ thù ở thuộc địa yếu hơn kẻ thù của giai cấp vô sản ở chính quốc"], ans: 2 },
+            { id: 50, q: "Trong Chính cương vắn tắt, Hồ Chí Minh xác định phương hướng chiến lược của cách mạng Việt Nam như thế nào?", opts: ["A. Làm tư sản dân quyền cách mạng để đi tới xã hội cộng sản", "B. Làm cách mạnh tư sản và thổ địa cách mạng để đi tới xây dựng chủ nghĩa tư bản", "C. Làm tư sản dân quyền cách mạng và thổ địa cách mạng để đi tới xã hội tư bản", "D. Làm tư sản dân quyền cách mạng và thổ địa cách mạng để đi tới xã hội cộng sản"], ans: 3 },
+            { id: 51, q: "Hoàn chỉnh câu sau: 'Nước Việt Nam có quyền hưởng [1] và sự thực đã thành một nước [2]. Toàn thể dân Việt Nam quyết đem tất cả tinh thần và lực lượng, tính mạng và của cải để giữ vững quyền [3] ấy'.", opts: ["A. Tự do và độc lập", "B. Độc lập và bình đẳng", "C. Độc lập và tự do", "D. Tự do và hạnh phúc"], ans: 0 },
+            { id: 52, q: "Nội dung nào thể hiện sự khác biệt trong quan điểm về độc lập dân tộc của Hồ Chí Minh và nhà cách mạng Tôn Trung Sơn?", opts: ["A. Độc lập cho các dân tộc", "B. Độc lập dân tộc thuộc địa, độc lập dân tộc gắn liền với chủ nghĩa xã hội", "C. Độc lập cho nhân dân lao động...", "D. Độc lập dân tộc gắn liền với chủ nghĩa xã hội, quá trình cách mạng đó phải dưới sự lãnh đạo của giai cấp công nhân..."], ans: 3 },
+            { id: 53, q: "Hoàn chỉnh câu sau: 'Chỉ có chủ nghĩa cộng sản mới cứu [...] đem lại cho mọi người không phân biệt chủng tộc và nguồn gốc sự tự do, bình đẳng, bác ái, đoàn kết, ấm no trên quả đất...'", opts: ["A. Loài người", "B. Nhân dân", "C. Nhân loại", "D. Con người"], ans: 2 },
+            { id: 54, q: "Trong nội dung xây dựng kinh tế thời kỳ quá độ lên chủ nghĩa xã hội, Hồ Chí Minh đã chủ trương xây dựng những cơ cấu nào?", opts: ["A. Cơ cấu kinh tế ngành, cơ cấu các thành phần kinh tế, cơ cấu vùng kinh tế", "B. Cơ cấu các thành phần kinh tế, cơ cấu vùng kinh tế và lãnh thổ", "C. Cơ cấu kinh tế ngành, cơ cấu các thành phần kinh tế, cơ cấu vùng kinh tế và lãnh thổ", "D. Cơ cấu vùng kinh tế và lãnh thổ, cơ cấu kinh tế ngành"], ans: 2 },
+            { id: 55, q: "Tổ chức Quốc tế cộng sản được thành lập vào thời gian nào?", opts: ["A. Tháng 4/1917", "B. Tháng 2/1920", "C. Tháng 3/1919", "D. Tháng 5/1918"], ans: 2 },
+            { id: 56, q: "Theo Hồ Chí Minh, trong quá trình cách mạng xã hội chủ nghĩa, chúngta phải cải tạo nền kinh tế cũ và xây dựng nền kinh tế mới mà:", opts: ["A. Cải tạo xã hội cũ và xây dựng xã hội mới đều là nhiệm vụ trọng tâm", "B. Cải tạo nền kinh tế cũ là nhiệm vụ trung tâm, chủ chốt", "C. Cải tạo nền kinh tế cũ là chủ yếu", "D. Xây dựng là nhiệm vụ chủ chốt và lâu dài"], ans: 3 },
+            { id: 57, q: "Hoàn chỉnh câu sau: 'Nước [...] mà dân không hưởng [...] tự do, thì [...] cũng chẳng có ý nghĩa gì'", opts: ["A. Độc lập - hạnh phúc - tự do", "B. Độc lập - tự do - hạnh phúc", "C. Độc lập - dân chủ - độc lập", "D. Độc lập - hạnh phúc - độc lập"], ans: 1 },
+            { id: 58, q: "Hoàn chỉnh câu sau: 'Bộ phận nào mà ra mặt phản cách mạng [...] thì phải đánh đổ'. (Trong tác phẩm “Sách lược vắn tắt của Đảng”).", opts: ["A. Đảng Việt Cách", "B. Đảng Lập hiến", "C. Việt Nam Quốc dân đảng", "D. Tân Việt Cách mạng đảng"], ans: 1 },
+            { id: 59, q: "Hoàn chỉnh câu sau: 'Động lực văn hóa, khoa học, giáo dục là động lực [...] không thể thiếu của chủ nghĩa xã hội'.", opts: ["A. Quan trọng", "B. Tinh thần", "C. Vật chất và tinh thần", "D. Vật chất"], ans: 1 },
+            { id: 60, q: "Hồ Chí Minh lựa chọn con đường cách mạng vô sản dựa trên cơ sở nào?", opts: ["A. Tất cả phương án", "B. Nghiên cứu, khảo nghiệm các xu hướng, ngả đường cách mạng lớn trên thế giới trong hành trình tìm đường cứu nước", "C. Nghiên cứu và tiếp thu lý luận của chủ nghĩa Mác-Lênin", "D. Thực tiễn nghiên cứu, phân tích những phong trào cách mạng ở trong nước cuối thế kỷ XIX, đầu thế kỷ XX"], ans: 0 },
+            { id: 61, q: "Hoàn chỉnh câu sau: 'Bây giờ học thuyết nhiều, chủ nghĩa nhiều, nhưng chủ nghĩa [...] là chủ nghĩa Lênin'", opts: ["A. Cách mệnh nhất, chắc chắn nhất", "B. Khoa học nhất", "C. Chân chính nhất, cách mệnh nhất", "D. Chân chính nhất, chắc chắn nhất, cách mệnh nhất"], ans: 3 },
+            { id: 62, q: "Hoàn chỉnh câu sau: Tư tưởng Hồ Chí Minh mở ra cho các dân tộc thuộc địa con đường giải phóng dân tộc gắn với giải phóng giai cấp và [...]", opts: ["A. Giải phóng người cùng khổ", "B. Giải phóng con người", "C. Giải phóng người nô lệ", "D. Giải phóng người bị áp bức"], ans: 1 },
+            { id: 63, q: "Hoàn chỉnh câu sau: 'Nền kinh tế mà chúng ta xây dựng cần phải phát triển toàn diện ngành chủ yếu là: công - nông - thương nghiệp; trong đó [...] là hai cái chân của nền kinh tế nước nhà'", opts: ["A. Nông nghiệp và công nghiệp nhẹ", "B. Công nghiệp và nông nghiệp", "C. Công nghiệp nặng và nông nghiệp", "D. Nông nghiệp và thương nghiệp"], ans: 1 },
+            { id: 64, q: "Điểm giống và khác nhau giữa hai giai đoạn của “Cộng sản” (Trong tác phẩm Thưởng thức chính trị) là gì?", opts: ["A. Chủ nghĩa xã hội vẫn còn chút ít vết tích của xã hội cũ, xã hội cộng sản thì hoàn toàn không còn vết tích của xã hội cũ", "B. Chủ nghĩa xã hội là tư bản, địa chủ không còn nữa...", "C. Chủ nghĩa xã hội là tư liệu sản xuất tập trung...", "D. Chủ nghĩa xã hội không còn vết tích của xã hội cũ..."], ans: 0 },
+            { id: 65, q: "Đại hội nào của Đảng xác định khá toàn diện, có hệ thống những vấn đề cốt yếu thuộc nội hàm niệm tư tưởng Hồ Chí Minh?", opts: ["A. Đại hội Đại biểu toàn quốc lần thứ XI (2011)", "B. Đại hội Đại biểu toàn quốc lần thứ IX (2001)", "C. Đại hội Đại biểu toàn quốc lần thứ VII (1991)", "D. Đại hội Đại biểu toàn quốc lần thứ VIII (1996)"], ans: 1 },
+            { id: 66, q: "Hoàn chỉnh câu sau: 'Khi tôi độ [...] lần đầu tiên tôi được nghe ba chữ Pháp: Tự do, Bình đẳng, Bác ái...'", opts: ["A. Mười lăm tuổi", "B. Mười ba tuổi", "C. Mười bốn tuổi", "D. Mười sáu tuổi"], ans: 1 },
+            { id: 67, q: "Sau thời gian hoạt động ở Pháp, tháng 6/1923 Nguyễn Ái Quốc bắt đầu hoạt động ở đâu?", opts: ["A. Mỹ", "B. Đức", "C. Liên Xô", "D. Anh"], ans: 2 },
+            { id: 68, q: "Hoàn chỉnh câu sau: “Dân ta có một lòng nồng nàn yêu nước. Đó là một truyền thống quý báu của ta. Từ xưa đến nay, [1] thì tinh thần ấy lại [2]...'", opts: ["A. Mỗi khi Tổ quốc bị xâm lược - trỗi dậy", "B. Hễ Tổ quốc bị xâm lăng - sôi nổi", "C. Mỗi khi Tổ quốc bị xâm lăng - sôi nổi", "D. Khi Tổ quốc bị ngoại xâm - trỗi dậy"], ans: 1 },
+            { id: 69, q: "Hoàn chỉnh câu sau: 'Người ta sinh ra tự do và bình đẳng về quyền lợi, và phải luôn luôn được tự do và bình đẳng về quyền lợi. Đó là [...]'.", opts: ["A. Những lẽ phải không ai chối cãi được", "B. Là quyền thiêng liêng, bất khả xâm phạm", "C. Là điều không ai chối cãi được", "D. Là lẽ phải không ai chối cãi được"], ans: 3 },
+            { id: 70, q: "Theo Hồ Chí Minh: 'Sức mạnh vô địch của Đảng là ở tinh thần kỷ luật tự giác, ý thức tổ chức nghiêm chỉnh của cán bộ, đảng viên'. Câu nói trên đề cập đến nguyên tắc nào?", opts: ["A. Tập thể lãnh đạo, cá nhân phụ trách", "B. Tự phê bình và phê bình", "C. Đoàn kết thống nhất trong Đảng", "D. Kỷ luật nghiêm minh, tự giác"], ans: 3 },
+            { id: 71, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: “Đảng có vững, [...] mới thành công, cũng như người cầm lái có vững thì [...]”", opts: ["A. Cách mệnh, thuyền mới chạy", "B. Kháng chiến, tàu mới chạy", "C. Cách mạng, tàu mới đi", "D. Cách mệnh, thuyền chạy"], ans: 0 },
+            { id: 72, q: "Tác phẩm nào sau đây của Hồ Chí Minh đề cập đến giáo dục, rèn luyện toàn diện đội ngũ cán bộ cách mạng của Đảng, của Nhà nước ta, được xuất bản năm 1947?", opts: ["A. Bản án chế độ thực dân Pháp", "B. Con đường dẫn tôi đến Chủ nghĩa Mác-Lênin", "C. Sửa đổi lối làm việc", "D. Đường Cách mệnh"], ans: 2 },
+            { id: 73, q: "Khẳng định sự cần thiết của việc xây dựng khối liên minh chiến đấu giữa các dân tộc thuộc địa... Khối liên minh này sẽ là một trong những [...]", opts: ["A. Cái cánh của máy bay", "B. Cái cánh của một con chim", "C. Cánh tay của một con người", "D. Cái cánh của cách mạng vô sản"], ans: 3 },
+            { id: 74, q: "Nhà nước pháp quyền nhân nghĩa là nhà nước tôn trọng, bảo đảm thực hiện đầy đủ các quyền [...]", opts: ["A. Dân tộc", "B. Giai cấp", "C. Dân chủ", "D. Con người"], ans: 3 },
+            { id: 75, q: "Trong các giá trị truyền thống của dân tộc Việt Nam, giá trị nào được coi là dòng chảy chính trong truyền thống văn hóa dân tộc, là cội nguồn trí tuệ?", opts: ["A. Dũng cảm, sáng tạo", "B. Chủ nghĩa yêu nước", "C. Lòng yêu thương con người", "D. Đoàn kết dân tộc"], ans: 1 },
+            { id: 76, q: "Đâu là nội dung không đúng theo tư tưởng Hồ Chí Minh về mục tiêu kinh tế trong xây dựng chủ nghĩa xã hội?", opts: ["A. Nền công nghiệp hiện đại", "B. Xây dựng một Nhà nước hiện đại", "C. Nền nông nghiệp hiện đại", "D. Khoa học kỹ thuật tiên tiến"], ans: 1 },
+            { id: 77, q: "Hội nghị lần thứ nhất BCH Trung ương lâm thời của Đảng (10-1930), đã chỉ trích và phê phán đường lối của Nguyễn Ái Quốc trong Chính cương vắn tắt, Sách lược vắn tắt như thế nào?", opts: ["A. Mang nặng cốt cách phong kiến", "B. Chẳng khác gì là 'đuổi hổ cửa trước, rước beo cửa sau'", "C. Chẳng khác nào xin giặc rủ lòng thương", "D. Chỉ lo đến việc phản đế, mà quên mất lợi ích giai cấp tranh đấu"], ans: 3 },
+            { id: 78, q: "Trước cách mạng Tháng Tám, Hồ Chí Minh định hướng xây dựng nền văn hóa trên những lĩnh vực nào?", opts: ["A. Kinh tế, chính trị, văn hóa, xã hội và luân lý", "B. Kinh tế, chính trị, văn hóa, xã hội và tâm lý", "C. Tâm lý, luân lý, xã hội, chính trị và kinh tế", "D. Tâm lý, văn hóa, xã hội, luân lý và kinh tế"], ans: 3 },
+            { id: 79, q: "Làm cho các dân tộc thuộc địa, từ trước tới nay vẫn [...], hiểu biết nhau hơn và đoàn kết lại... khối [...] này sẽ là một trong những cái cánh của cách mạng vô sản.", opts: ["A. Chưa hiểu nhau; liên minh", "B. Xa cách nhau; đoàn kết", "C. Cách biệt nhau; liên minh", "D. Hiểu lầm nhau; đoàn kết"], ans: 2 },
+            { id: 80, q: "Theo Chủ tịch Hồ Chí Minh bao nhiêu những cái xấu xa, thối nát, bất công, áp bức của chế độ cũ... sẽ không thể tồn tại ở đâu hiện nay?", opts: ["A. Ủy ban thường vụ Trung ương Đảng", "B. Tất cả phương án", "C. Ủy ban nhân dân", "D. Ủy ban kháng chiến"], ans: 2 },
+            { id: 81, q: "Trong các luận điểm sau, luận điểm nào không phải của Hồ Chí Minh khi nói về điểm giống và khác nhau giữa hai giai đoạn của “Cộng sản”?", opts: ["A. Chủ nghĩa xã hội không còn vết tích của xã hội cũ...", "B. Chủ nghĩa xã hội là tư liệu sản xuất tập trung...", "C. Chủ nghĩa xã hội là tư bản, địa chủ không còn nữa...", "D. Chủ nghĩa xã hội vẫn còn chút ít vết tích..."], ans: 0 },
+            { id: 82, q: "Để tăng cường tính nghiêm minh của pháp luật đi đôi với đẩy mạnh giáo dục đạo đức, Hồ Chí Mình đã kết hợp nhuần nhuyễn giữa:", opts: ["A. 'Đức trị' và 'nhân trị'", "B. 'Nhân trị' và 'pháp trị'", "C. 'Đức trị' và 'pháp trị'", "D. 'Pháp trị' và 'dân trị'"], ans: 2 },
+            { id: 83, q: "Nhân dân có quyền lợi làm chủ, thì phải có nghĩa vụ làm tròn bổn phận công dân, giữ đúng [...] công dân.", opts: ["A. Đạo đức", "B. Tư cách", "C. Bổn phận", "D. Trách nhiệm"], ans: 0 },
+            { id: 84, q: "Quan điểm của Hồ Chí Minh đối với người làm nghề thủ công và lao động riêng lẻ khác trong phát triển kinh tế nhiều thành phần là:", opts: ["A. Nhà nước cần đặc biệt khuyến khích họ...", "B. Không xóa bỏ quyền sở hữu về tư liệu sản xuất...", "C. Cần ưu tiên để tạo nền tảng vật chất...", "D. Nhà nước bảo hộ quyền sở hữu về tư liệu sản xuất, ra sức hướng dẫn và giúp họ cải tiến cách làm ăn..."], ans: 3 },
+            { id: 85, q: "Khối liên minh này sẽ là một trong những [...]", opts: ["A. Cái cánh của cách mạng vô sản", "B. Yếu tố quyết định của cách mạng vô sản", "C. Nền tảng của cách mạng vô sản", "D. Điều kiện tiên quyết của cách mạng vô sản"], ans: 0 },
+            { id: 86, q: "Chỉ có [...] mới giải phóng được các dân tộc bị áp bức và giai cấp công nhân toàn thế giới", opts: ["A. Chủ nghĩa xã hội", "B. Chủ nghĩa xã hội và chủ nghĩa cộng sản", "C. Chủ nghĩa cộng sản", "D. Chế độ cộng sản"], ans: 1 },
+            { id: 87, q: "Theo Hồ Chí Minh, nhiệm vụ quan trọng nhất của thời kỳ quá độ lên chủ nghĩa xã hội là:", opts: ["A. Cải tạo xã hội cũ, xây dựng xã hội mới", "B. Xây dựng tiền đề về kinh tế, chính trị, văn hóa, tư tưởng...", "C. Xây dựng nền tảng vật chất và kỹ thuật của chủ nghĩa xã hội", "D. Tất cả phương án"], ans: 2 },
+            { id: 88, q: "Quan điểm “chỉ có thể thực hiện hoàn toàn công cuộc giải phóng các nước thuộc địa khi giai cấp vô sản giành được thắng lợi ở các nước tư bản tiên tiến” đánh giá thế nào?", opts: ["A. Cách mạng thuộc địa có thể nổ ra và giành thắng lợi trước", "B. Cách mạng thuộc địa phụ thuộc vào cách mạng vô sản ở chính quốc", "C. Cách mạng vô sản ở chính quốc phụ thuộc cách mạng thuộc địa", "D. Cách mạng thuộc địa không phụ thuộc..."], ans: 1 },
+            { id: 89, q: "Hồ Chí Minh kế thừa, phát triển những tư tưởng nào của Phật giáo vào việc xây dựng xã hội mới, con người mới Việt Nam?", opts: ["A. Tư tưởng nhân văn, nhân bản", "B. Tư tưởng nhân văn, đạo đức", "C. Tư tưởng nhân bản, đạo đức tích cực", "D. Tư tưởng nhân văn, pháp trị"], ans: 2 },
+            { id: 90, q: "Muốn cải tạo xã hội chủ nghĩa thì phải cải tạo chính mình, nếu không có tư tưởng xã hội chủ nghĩa thì [...]", opts: ["A. Không có nền kinh tế phát triển", "B. Tất cả phương án", "C. Không làm việc xã hội chủ nghĩa được", "D. Không có khoa học kỹ thuật tiên tiến"], ans: 2 },
+            { id: 91, q: "Khái niệm tư tưởng Hồ Chí Minh do Đại hội XI nêu ra làm rõ được những nội dung mới nào?", opts: ["A. Bản chất cách mạng, khoa học, cơ sở hình thành...", "B. Bản chất cách mạng, khoa học, cơ sở hình thành, nội cơ bản và giá trị, ý nghĩa trường tồn...", "C. Hệ thống quan điểm toàn diện...", "D. Nội dung cơ bản thuộc nội hàm..."], ans: 1 },
+            { id: 92, q: "Hồ Chí Minh khẳng định như thế nào về con đường cách mạng Việt Nam?", opts: ["A. Hoàn thành cách mạng dân tộc, dân chủ nhân dân, tiến nhanh lên CNXH", "B. Tiến hành giải phóng dân tộc và đi lên CNTB", "C. Tiến hành giải phóng dân tộc, hoàn thành cách mạng DTDCND tiến nhanh lên CNTB", "D. Tiến hành giải phóng dân tộc, hoàn thành cách mạng DTDCND tiến dần lên CNXH"], ans: 3 },
+            { id: 93, q: "Tìm câu chưa chính xác khi nói về tính khoa học của nền văn hóa mới theo tư tưởng Hồ Chí Minh:", opts: ["A. Tính khoa học biểu hiện kế thừa truyền thống...", "B. Tính khoa học là phải truyền bá tư tưởng triết học...", "C. Tính khoa học là tính tiên tiến nhưng chưa cần thuận với trào lưu tiến hóa của thời đại.", "D. Tính khoa học là phải đấu tranh chống lại những gì trái khoa học..."], ans: 2 },
+            { id: 94, q: "Trong đoàn kết với các dân tộc, Hồ Chí Minh nhấn mạnh: 'Đồng bào tất cả các dân tộc, không phân biệt... thương yêu giúp đỡ lẫn nhau phải [...] như anh em một nhà...'", opts: ["A. Đoàn kết chặt chẽ.", "B. Đoàn kết lâu dài.", "C. Đoàn kết chân thành.", "D. Đoàn kết hợp tác."], ans: 0 },
+            { id: 95, q: "Trong mấy điểm lớn trong Chính sách cán bộ, theo Hồ Chí Minh cần phải chú ý những gì?", opts: ["A. Hiểu biết cán bộ khéo dùng cán bộ, cất nhắc cán bộ, thương yêu cán bộ, phê bình cán bộ.", "B. Khéo dùng cán bộ, cất nhắc cán bộ.", "C. Hiểu biết cán bộ.", "D. Thương yêu và phê bình cán bộ."], ans: 0 },
+            { id: 96, q: "Phải chú trọng 'đạo làm gương', bởi vì theo Hồ Chí Minh, “Đối với các dân tộc phương Đông... một tấm gương sống còn có giá trị hơn [...]”", opts: ["A. Một trăm bài diễn văn tuyên truyền.", "B. Hàng trăm bài diễn văn tuyên truyền.", "C. Một trăm tủ sách.", "D. Hàng trăm hòm vàng."], ans: 0 },
+            { id: 97, q: "Theo Hồ Chí Minh, mục đích của phê bình và tự phê bình là gì?", opts: ["A. Cốt để giúp nhau sửa chữa, giúp nhau tiến bộ. Cốt để đổi cách làm việc cho tốt hơn, đúng hơn. Cốt để đoàn kết và thống nhất nội bộ.", "B. Thêm bớt khuyết điểm của nhau.", "C. Giấu giếm khuyết điểm cho nhau.", "D. Nịnh người trên, xem khinh người dưới."], ans: 0 },
+            { id: 98, q: "Đâu là nhân tố thể hiện sự sáng tạo của Hồ Chí Minh trong quy luật ra đời của Đảng Cộng sản Việt Nam.", opts: ["A. Phong trào công nhân.", "B. Tất cả phương án.", "C. Phong trào yêu nước.", "D. Chủ nghĩa Mác Lênin."], ans: 2 },
+            { id: 99, q: "Chúng ta là những người lao động làm chủ nước nhà. Muốn làm chủ được tốt, phải có [...] làm chủ", opts: ["A. Tư cách.", "B. Tác phong.", "C. Quyết tâm.", "D. Năng lực."], ans: 3 },
+            { id: 100, q: "Theo Hồ Chí Minh, cách mạng giải phóng dân tộc là việc chung của cả dân chúng chứ không phải việc của [...].", opts: ["A. Một vài người.", "B. Một người.", "C. Một hai người.", "D. Một nhóm người."], ans: 2 },
+            { id: 101, q: "Trong Sách lược vắn tắt, Hồ Chí Minh xác định: Đảng cần phải liên lạc với bộ phận giai cấp nào trong xã hội?", opts: ["A. Tiểu tư sản, trí thức, trung nông, Thanh niên, Tân Việt.", "B. Phú nông, trung, tiểu địa chủ và tri thức An Nam.", "C. Phú nông, tư bản An Nam.", "D. Trung, tiểu địa chủ."], ans: 1 },
+            { id: 102, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Tư tưởng Hồ Chí Minh góp phần tích cực vào cuộc đấu tranh vì [...]'.", opts: ["A. Độc lập, tự do của các dân tộc bị áp bức.", "B. Tự do, ấm no của các dân tộc.", "C. Hòa bình và công lý.", "D. Độc lập dân tộc, dân chủ, hòa bình, hợp tác và phát triển trên thế giới."], ans: 3 },
+            { id: 103, q: "Con đường cách mạng của ai được Hồ Chí Minh đánh giá là 'chẳng khác nào xin giặc rủ lòng thương'?", opts: ["A. Phan Bội Châu.", "B. Nguyễn Thái Học.", "C. Hoàng Hoa Thám.", "D. Phan Chu Trinh."], ans: 3 },
+            { id: 104, q: "Hồ Chí Minh cho rằng lực lượng của giai cấp công nhân và nhân dân lao động là:", opts: ["A. To lớn, mạnh mẽ.", "B. Vô cùng vô tận.", "C. Vô cùng mạnh mẽ.", "D. Vô cùng to lớn."], ans: 3 },
+            { id: 105, q: "Câu 'Chủ trương làm tư sản dân quyền cách mạng và thổ địa cách mạng để đi tới xã hội cộng sản' được trích từ văn kiện nào của Hồ Chí Minh?", opts: ["A. Chương trình tóm tắt.", "B. Đường cách mệnh.", "C. Chính cương vắn tắt.", "D. Sách lược vắn tắt."], ans: 2 },
+            { id: 106, q: "Chọn đáp án đúng nhất theo Hồ Chí Minh: Đặc điểm to nhất của ta khi quá độ lên chủ nghĩa xã hội là:", opts: ["A. Từ một nước công nghiệp tiến thẳng lên chủ nghĩa xã hội...", "B. Từ một nước nông nghiệp trung bình...", "C. Từ một nước nông nghiệp lạc hậu tiến thẳng lên chủ nghĩa xã hội không phải kinh qua giai đoạn phát triển tư bản chủ nghĩa.", "D. Từ một nước nông nghiệp phát triển..."], ans: 2 },
+            { id: 107, q: "Theo Hồ Chí Minh, 'Là người đầy tớ của dân', có nghĩa là phải?", opts: ["A. Thực hiện theo yêu cầu của quần chúng.", "B. Luôn lắng nghe và thực hiện theo yêu cầu của quần chúng.", "C. Tận tâm, tận lực phụng sự nhân dân nhằm đem lại các quyền lợi và lợi ích cho nhân dân.", "D. Luôn nghe theo quần chúng."], ans: 2 },
+            { id: 108, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: Theo Hồ Chí Minh, đặc điểm to nhất của ta khi quá độ lên chủ nghĩa xã hội là từ một nước nông nghiệp lạc hậu tiến thẳng lên chủ nghĩa xã hội [...].", opts: ["A. Không phải kinh qua giai đoạn phát triển tư bản chủ nghĩa.", "B. Không bỏ qua giai đoạn phát triển tư bản chủ nghĩa.", "C. Kinh qua giai đoạn phát triển tư bản chủ nghĩa.", "D. Có sự giúp sức của nhiều nước trên thế giới."], ans: 0 },
+            { id: 109, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Đạo đức cách mạng không phải trên trời sa xuống... Cũng như [...] càng mài càng sáng, [...] càng luyện càng trong'.", opts: ["A. Đá - vàng.", "B. Vàng - đá.", "C. Vàng - ngọc.", "D. Ngọc - vàng."], ans: 3 },
+            { id: 110, q: "Trong tác phẩm “Chính phủ là công bộc của dân', theo Chủ tịch Hồ Chí Minh, các công việc mà Chính phủ làm phải nhằm vào mục đích gì?", opts: ["A. Mưu cầu hạnh phúc cho mọi người.", "B. Mưu cầu tự do hạnh phúc và việc làm cho mọi người.", "C. Mưu cầu tự do cho mọi người.", "D. Mưu cầu tự do, hạnh phúc cho mọi người."], ans: 3 },
+            { id: 111, q: "Đâu là nhân tố thể hiện sự sáng tạo của Hồ Chí Minh trong quy luật ra đời của Đảng Cộng sản Việt Nam?", opts: ["A. Phong trào công nhân.", "B. Tất cả phương án.", "C. Phong trào yêu nước.", "D. Chủ nghĩa Mác - Lênin."], ans: 2 },
+            { id: 112, q: "Trong các nguyên tắc xây dựng Đảng, nguyên tắc nào là cơ bản trong xây dựng, tổ chức, hoạt động của Đảng, theo Hồ Chí Minh?", opts: ["A. Tự phê bình và phê bình.", "B. Tập thể lãnh đạo, cá nhân phụ trách.", "C. Kỷ luật nghiêm minh tự giác.", "D. Tập trung dân chủ."], ans: 3 },
+            { id: 113, q: "Theo Hồ Chí Minh, thước đo một Nhà nước vì dân là phải được lòng dân. Do đó, với cán bộ nhà nước phải:", opts: ["A. Gần gũi nhân dân khi cần.", "B. Giáo huấn nhân dân.", "C. Làm sao cho được lòng dân, dân tin, dân mến, dân yêu.", "D. Quan cách trước dân."], ans: 2 },
+            { id: 114, q: "Theo Hồ Chí Minh, đấu tranh chống chủ nghĩa cá nhân không phải là:", opts: ["A. Giày xéo lên lợi ích cá nhân.", "B. Hy sinh lợi ích cá nhân vì tập thể.", "C. Xóa bỏ lợi ích cá nhân.", "D. Lấy lợi ích cá nhân phục vụ lợi ích tập thể."], ans: 0 },
+            { id: 115, q: "Theo Hồ Chí Minh trong các biện pháp xây dựng chủ nghĩa xã hội, biện pháp nào được xác định là cơ bản, quyết định, lâu dài?", opts: ["A. Phải huy động hết các nguồn lực vốn có trong dân để làm lợi cho dân.", "B. Kết hợp xây dựng với bảo vệ tiến hành đồng thời hai nhiệm vụ chiến lược...", "C. Huy động nguồn vốn đầu tư nước ngoài.", "D. Thực hiện cải tạo xã hội cũ, xây dựng xã hội mới."], ans: 0 },
+            { id: 116, q: "Theo quan điểm Hồ Chí Minh, lực lượng tiến hành bạo lực cách mạng là gì?", opts: ["A. Giai cấp tư sản và tầng lớp tiểu tư sản.", "B. Quần chúng nhân dân, chủ yếu là lực lượng chính trị và quân sự.", "C. Quần chúng.", "D. Giai cấp công nhân và nông dân."], ans: 1 },
+            { id: 117, q: "Theo Hồ Chí Minh mục đích của tiếp thu tinh hoa văn hóa nhân loại là để:", opts: ["A. Làm cho văn hóa Việt Nam ngày càng phong phú.", "B. Làm giàu cho văn hóa Việt Nam, xây dựng văn hóa Việt Nam hợp với tinh thần dân chủ lao động.", "C. Làm cho văn hóa Việt Nam ngày càng hiện đại.", "D. Làm cho nền văn hóa Việt Nam mang tinh thần dân chủ."], ans: 1 },
+            { id: 118, q: "Theo Hồ Chí Minh phải nghiêm túc khắc phục các phản động lực trong con người và tổ chức. Đó là:", opts: ["A. Chủ nghĩa cá nhân.", "B. Tư tưởng tư sản.", "C. Phong cách tiểu tư sản.", "D. Chủ nghĩa vị kỷ."], ans: 0 },
+            { id: 119, q: "Lòng khoan dung độ lượng ở Hồ Chí Minh không phải là một sách lược nhất thời, một thủ đoạn chính trị mà là sự tiếp nối và phát triển của:", opts: ["A. Mục tiêu cách mạng.", "B. Truyền thống nhân ái, bao dung của dân tộc, từ chính mục tiêu của cuộc cách mạng.", "C. Truyền thống yêu nước của dân tộc...", "D. Chủ nghĩa yêu nước..."], ans: 1 },
+            { id: 120, q: "Nguyễn Ái Quốc đến Liên Xô lần đầu năm nào?", opts: ["A. 1925.", "B. 1923.", "C. 1924.", "D. 1921."], ans: 1 },
+            { id: 121, q: "'[...] mới gánh được nặng và đi được xa. Người cách mạng phải có [...] làm nền tảng mới hoàn thành được nhiệm vụ cách mạng vẻ vang'.", opts: ["A. Sức có mạnh - cần kiệm liêm chính.", "B. Sức có mạnh - đạo đức cách mạng.", "C. Đạo đức cách mạng - cần kiệm liêm chính.", "D. Sức có mạnh - tinh thần cách mạng."], ans: 2 },
+            { id: 122, q: "'Nhân dân có quyền lợi làm chủ, thì phải có nghĩa vụ làm tròn bổn phận công dân, giữ đúng [...] công dân'.", opts: ["A. Đạo đức.", "B. Tư cách.", "C. Bổn phận.", "D. Trách nhiệm."], ans: 1 },
+            { id: 123, q: "'Có sức mạnh cả nước một lòng, lại có sự ủng hộ của nhân dân thế giới, chúng sẽ có một [...] tổng hợp cộng với phương pháp cách mạng thích hợp, [...] cách mạng nước ta sẽ đi đến đích cuối cùng'.", opts: ["A. Nền tảng, nhất định.", "B. Sức mạnh, nhất định.", "C. Nền tảng, chắc chắn.", "D. Sức mạnh, chắc chắn."], ans: 1 },
+            { id: 124, q: "Trong Bài nói tại buổi khai mạc Đại hội thống nhất Việt Minh - Liên Việt, Hồ Chí Minh khẳng định, khối đại đoàn kết của toàn dân sẽ phát triển thành đại đoàn kết giữa dân ta với những lực lượng nào trên thế giới?", opts: ["A. Nhân dân các nước bạn, Pháp, nhân dân yêu chuộng hòa bình.", "B. Nhân dân ba nước Đông Dương.", "C. Nhân dân Á - Phi - Mỹ Latinh.", "D. Phong trào cộng sản và công nhân quốc tế, phong trào giải phóng dân tộc và các lực lượng yêu chuộng hòa bình, công lý..."], ans: 3 },
+            { id: 125, q: "Hồ Chí Minh nói 'Dân khí mạnh thì quân lính nào, súng ống nào cũng không chống lại nổi' là để đánh giá vị trí và vai trò của ai?", opts: ["A. Liên minh giữa giai cấp công nhân với nông dân.", "B. Giai cấp nông dân.", "C. Quần chúng nhân dân.", "D. Giai cấp công nhân."], ans: 2 },
+            { id: 126, q: "'Giàu sang không [...] nghèo khó không thế [...] uy vũ không thể [...]'.", opts: ["A. Khuất phục, quyến rũ, chuyển lay.", "B. Chuyển lay, khuất phục, quyến rũ.", "C. Quyến rũ, chuyển lay, khuất phục.", "D. Quyến rũ, chuyển lay, quật ngã."], ans: 2 },
+            { id: 127, q: "Chọn phương án sai trong các phương án sau:", opts: ["A. Thời kỳ trước 1911: Hình thành tư tưởng yêu nước và chí hướng cứu nước.", "B. Thời kỳ từ 1920 - 1930: Hình thành về cơ bản tư tưởng về cách mạng Việt Nam.", "C. Thời kỳ từ 1911 - 1920: Tìm thấy con đường cứu nước giải phóng dân tộc.", "D. Thời kỳ từ 1930 - 1941: Tư tưởng Hồ Chí Minh tiếp tục hoàn thiện, phát triển và tỏa sáng."], ans: 3 },
+            { id: 128, q: "Việc biểu quyết tán thành Đệ tam quốc tế (Quốc tế thứ III), tham gia thành lập Đảng Cộng sản Pháp (12-1920), đánh dấu bước chuyển biến về:", opts: ["A. Chuyển biến về nhận thức.", "B. Chuyển biến về chất.", "C. Chuyển biến về lượng.", "D. Chuyển biến về cách nhìn nhận..."], ans: 1 },
+            { id: 129, q: "Trong cương lĩnh chính trị của Đảng, Hồ Chí Minh xác định mục tiêu chính trị của Đảng là gì?", opts: ["A. Dân chúng được tự do tổ chức, nam nữ được bình quyền...", "B. Đánh đổ đế quốc chủ nghĩa Pháp và bọn phong kiến, làm cho nước Nam được hoàn toàn độc lập, dựng ra Chính phủ công nông binh...", "C. Thủ tiêu hết quốc trái...", "D. Tư sản dân quyền cách mạng và thổ địa cách mạng dể đi tới xã hội cộng sản."], ans: 1 },
+            { id: 130, q: "Theo tư tưởng Hồ Chí Minh trên mặt trận văn hóa [...].", opts: ["A. Văn nghệ sĩ là chiến sĩ, tác phẩm văn nghệ là vũ khí sắc bén trong đấu tranh cách mạng, trong xây dựng xã hội mới, con người mới.", "B. Văn nghệ sĩ là những người đi đầu.", "C. Văn nghệ sĩ là những người hăng hái nhất.", "D. Văn nghệ sĩ là động lực của cuộc cách mạng."], ans: 0 },
+            { id: 131, q: "Tìm một câu có nội dung không đúng khi Hồ Chí Minh nói về tính chất khó khăn phức tạp của thời kỳ quá độ lên chủ nghĩa xã hội nước ta:", opts: ["A. Luôn bị các thế lực phản động trong và ngoài nước tìm cách quấy phá.", "B. Đây là cuộc cách mạng làm đảo lộn mọi mặt đời sống xã hội.", "C. Trong sự nghiệp xây dựng chủ nghĩa xã hội, Đảng, nhà nước, nhân dân chưa có kinh nghiệm.", "D. Đây là cuộc cách mạng chỉ làm thay đổi thói quen cũ trong mỗi con người."], ans: 3 },
+            { id: 132, q: "Hồ Chí Minh viết tác phẩm Nâng cao đạo đức cách mạng, quét sạch chủ nghĩa cá nhân, nhân kỷ niệm lần thứ bao nhiêu ngày thành lập Đảng?", opts: ["A. 29 năm.", "B. 39 năm.", "C. 19 năm.", "D. 49 năm."], ans: 1 },
+            { id: 133, q: "In the work “Sửa đổi lối làm việc', part Cán bộ, according to Ho Chi Minh, the Party must resolutely combat what diseases?", opts: ["A. Bệnh tham ô, tham nhũng.", "B. Bệnh thoái hóa biến chất của cán bộ Đảng viên.", "C. Bệnh chủ quan, bệnh hẹp hòi, bệnh ba hoa.", "D. Bệnh mất đoàn kết chia rẽ nội bộ."], ans: 2 },
+            { id: 134, q: "Theo Hồ Chí Minh, cách mạng giải phóng dân tộc là việc chung của cả dân chúng chứ không phải việc của [...].", opts: ["A. Một vài người.", "B. Một người.", "C. Một hai người.", "D. Một nhóm người."], ans: 2 },
+            { id: 135, q: "Trong xác định vị trí, vai trò của từng lực lượng tham gia cách mạng giải phóng dân tộc, theo Hồ Chí Minh lực lượng nào là “gốc của cách mệnh'?", opts: ["A. Học trò, nhà buôn nhỏ, điền chủ nhỏ.", "B. Công nhân và nông dân.", "C. Công nhân, nông dân và binh lính.", "D. Giai cấp nông dân."], ans: 1 },
+            { id: 136, q: "Trong tư tưởng đoàn kết quốc tế, Hồ Chí Minh đã định hướng hình thành những tầng mặt trận nào?", opts: ["A. Mặt trận đại đoàn kết dân tộc, Mặt trận đoàn kết Việt - Miên – Lào.", "B. Tất cả phương án.", "C. Mặt trận đại đoàn kết dân tộc, Mặt trận nhân dân tiến bộ thế giới đoàn kết với Việt Nam.", "D. Mặt trận đại đoàn kết dân tộc, Mặt trận đoàn kết Việt - Miên - Lào, Mặt trận nhân dân Á - Phi đoàn kết với VN, Mặt trận nhân dân tiến bộ TG..."], ans: 3 },
+            { id: 137, q: "Tác phẩm Nâng cao đạo đức cách mạng, quét sạch chủ nghĩa cá nhân, của Hồ Chí Minh có bút danh gì?", opts: ["A. T.L.", "B. X.Y.Z.", "C. Trần Lực.", "D. Hồ Chí Minh."], ans: 0 },
+            { id: 138, q: "Tìm phương án SAI trong các quan điểm sau của Hồ Chí Minh về Nhà nước thượng tôn pháp luật.", opts: ["A. Đề cao tính tự giác của con người.", "B. Chú trọng đưa pháp luật vào trong cuộc sống.", "C. Đảm bảo cho pháp luật được thi hành và có cơ chế giám sát việc thi hành pháp luật.", "D. Nêu cao tính nghiêm minh của pháp luật."], ans: 0 },
+            { id: 139, q: "“Chỉ có ít nhân vật trong lịch sử trở thành một bộ phận của [...] ngay khi còn sống và rõ ràng Hồ Chí Minh là một trong số đó'", opts: ["A. Nhân loại.", "B. Huyền thoại.", "C. Thời đại.", "D. Tinh hoa văn hóa nhân loại."], ans: 1 },
+            { id: 140, q: "Tìm phương án SAI trong quan điểm của Hồ Chí Minh về Nhà nước của dân.", opts: ["A. Nhà nước lấy lợi ích chính đáng của dân làm mục tiêu.", "B. Quyền lực nhà nước là “thừa ủy quyền' của nhân dân.", "C. Tất cả phương án.", "D. Quyền lực của nhà nước và xã hội thuộc về nhân dân."], ans: 2 },
+            { id: 141, q: "Con đường cách mạng nhà yêu nước của ai được Hồ Chí Minh đánh giá là 'Mang nặng phong cách phong kiến'?", opts: ["A. Nguyễn Thái Học.", "B. Hoàng Hoa Thám.", "C. Phan Bội Châu.", "D. Phan Chu Trinh."], ans: 1 },
+            { id: 142, q: "Nguyễn Ái Quốc biểu quyết tán thành Quốc tế III - Quốc tế Cộng sản và tham gia thành lập Đảng Cộng sản Pháp vào thời gian nào?", opts: ["A. 7/1921.", "B. 12/1920.", "C. 7/1920.", "D. 12/1921."], ans: 1 },
+            { id: 143, q: "Hồ Chí Minh cho rằng, nền giáo dục mới ở Việt Nam sẽ làm cho:", opts: ["A. Dân tộc chúng xuất trở nên một dân tộc anh hùng.", "B. Dân tộc chúng ta trở nên một dân tộc hùng mạnh.", "C. Dân tộc chúng ta trở nên một dân tộc văn minh.", "D. Dân tộc chúng ta trở nên một dân tộc dũng cảm, yêu nước, yêu lao động, một dân tộc xứng đáng với nước Việt Nam độc lập."], ans: 3 },
+            { id: 144, q: "Đảng Cộng sản Việt Nam do Hồ Chí Minh sáng lập và rèn luyện, hoạt động vì lợi ích của ai?", opts: ["A. Giai cấp công nhân, nhân dân lao động và của cả dân tộc Việt Nam.", "B. Giai cấp công nhân.", "C. Giai cấp công nhân, nông dân và tri thức.", "D. Bản thân Đảng."], ans: 0 },
+            { id: 145, q: "Theo Hồ Chí Minh, phải kiên quyết khắc phục các phản động lực trong con người và tổ chức. Đó là:", opts: ["A. Chủ nghĩa cá nhân.", "B. Tư tưởng tư sản.", "C. Phong cách tiểu tư sản.", "D. Chủ nghĩa vị kỷ."], ans: 0 },
+            { id: 146, q: "Chọn đáp án sai trong những đáp án được rút ra từ mệnh đề sau: “Đảng phải vừa là người lãnh đạo vừa là người đầy tớ thật trung thành của nhân dân”, là:", opts: ["A. Là công bộc của nhân dân.", "B. Là tận tâm, tận lực phụng sự nhân dân.", "C. Tôi tớ tôi đòi của nhân dân.", "D. Là lo trước cái lo của thiên hạ, vui sau thiên hạ."], ans: 2 },
+            { id: 147, q: "Mối quan hệ giữa môn học Tư tưởng Hồ Chí Minh với các môn học được xác định là ba bộ phận cấu thành chủ nghĩa Mác - Lênin có:", opts: ["A. Có mối quan hệ thống nhất chặt chẽ với nhau.", "B. Là mối quan hệ tác động qua lại.", "C. Là mối quan hệ giữa hệ thống quan điểm của Hồ Chí Minh với cơ sở của nó.", "D. Là mối quan hệ biện chứng."], ans: 0 },
+            { id: 148, q: "Để đoàn kết với phong trào cộng sản và công nhân quốc tế, Hồ Chí Minh chủ trương:", opts: ["A. Giương cao ngọn cờ hòa bình và công lý.", "B. Giương cao ngọn cờ độc lập, tự do, trên nền tảng của chủ nghĩa Mác - Lênin.", "C. Giương cao ngọn cờ độc lập dân tộc gắn liền với chủ nghĩa xã hội, thức hiện đoàn kết thống nhất trên nền tảng của chủ nghĩa Mác - Lênin...", "D. Thực hiện đoàn kết thống nhất trên nền tảng của chủ nghĩa Mác - Lênin..."], ans: 2 },
+            { id: 149, q: "Nội dung cốt lõi của tư tưởng Hồ Chí Minh là:", opts: ["A. Tư tưởng về chủ nghĩa xã hội.", "B. Tư tưởng về cách mạng giải phóng dân tộc.", "C. Tư tưởng về độc lập dân tộc gắn với chủ nghĩa xã hội.", "D. Tư tưởng về giải phóng giai cấp."], ans: 2 },
+            { id: 150, q: "Theo Hồ Chí Minh, Đảng sẽ mất quyền lãnh đạo nếu:", opts: ["A. Tụt hậu.", "B. Diễn biến hòa bình.", "C. Chệch hướng.", "D. Đảng không trong sạch, nếu cán bộ, đảng viên thoái hóa, biến chất, rơi vào chủ nghĩa cá nhân."], ans: 3 },
+            { id: 151, q: "Nguyên tắc quan trọng bậc nhất trong xây dựng một nền đạo đức mới theo tư tưởng Hồ Chí Minh là gì?", opts: ["A. Nói đi đôi với làm, phải nêu gương về đạo đức.", "B. Phải tạo thành phong trào quần chúng rộng rãi.", "C. Xây đi đôi với chống.", "D. Tu dưỡng đạo đức suốt đời."], ans: 0 },
+            { id: 152, q: "Theo Hồ Chí Minh, điều kiện để thực hiện đại đoàn kết dân tộc đó là:", opts: ["A. Kế thừa truyền thống yêu nước, nhân nghĩa, đoàn kết của dân tộc có lòng khoan dung, độ lượng với con người, có niềm tin vào nhân dân.", "B. Tất cả phương án.", "C. Có tinh thần nhiệt thành, cởi mở, độ lượng với con người.", "D. Có tấm lòng vị tha, độ lượng với con người."], ans: 0 },
+            { id: 153, q: "Trong định nghĩa về tư tưởng Hồ Chí Minh, Đảng đã nêu lên bản chất cách mạng khoa học của tư tưởng Hồ Chí Minh là gì?", opts: ["A. Đó là hệ thống quan điểm toàn diện và sâu sắc về những vấn đề lý luận có tính quy luật của cách mạng Việt Nam.", "B. Độc lập dân tộc gắn liền với chủ nghĩa xã hội.", "C. Là một hệ thống quan điểm toàn diện và sâu sắc về những vấn đề cơ bản của cách mạng Việt Nam.", "D. Tất cả phương án."], ans: 2 },
+            { id: 154, q: "Theo Hồ Chí Minh ưu điểm lớn nhất của Thiên chúa giáo là gì?", opts: ["A. Lòng vị tha.", "B. Yêu thiên nhiên.", "C. Lòng cao thượng.", "D. Lòng nhân ái cao cả và đức hi sinh."], ans: 3 },
+            { id: 155, q: "'Đồng bào tất cả các dân tộc, không phân biệt lớn nhỏ phải, thương yêu giúp đỡ lẫn nhau, phải [...] như anh em một nhà, để cùng nhau xây dựng Tổ quốc chung'.", opts: ["A. Đoàn kết chặt chẽ.", "B. Đoàn kết lâu dài.", "C. Đoàn kết chân thành.", "D. Đoàn kết hợp tác."], ans: 0 },
+            { id: 156, q: "Trong mặt trận dân tộc thống nhất, Đảng cộng sản Việt Nam:", opts: ["A. Thành viên cốt cán của mặt trận dân tộc thống nhất.", "B. Đại biểu của giai cấp công nhân trong Mặt trận dân tộc thống nhất.", "C. Vừa là thành viên, vừa là lực lượng lãnh đạo Mặt trận dân tộc thống nhất.", "D. Là đại biểu của Mặt trận dân tộc thống nhất."], ans: 2 },
+            { id: 157, q: "Trong hành trình bôn ba khắp các nước phương Tây, Hồ Chí Minh đã tìm hiểu và tiếp thu:", opts: ["A. Chủ nghĩa Tam dân của Tôn Trung Sơn.", "B. Những mặt tích cực của Nho giáo.", "C. Tư tưởng vị tha của Phật giáo.", "D. Nền văn hóa dân chủ và cách mạng phương Tây."], ans: 3 },
+            { id: 158, q: "Theo Hồ Chí Minh, người chiến sĩ văn nghệ phải có những tác phẩm văn nghệ:", opts: ["A. Mới mẻ, sáng tạo.", "B. Xứng đáng với tầm vóc dân tộc.", "C. Phối hợp với xu thế phát triển của thời đại.", "D. Xứng đáng với thời đại mới của đất nước và dân tộc."], ans: 3 },
+            { id: 159, q: "Theo Hồ Chí Minh, trong các biện pháp xây dựng chủ nghĩa xã hội, biện pháp nào được xác định là cơ bản, quyết định, lâu dài?", opts: ["A. Phải huy động hết các nguồn lực vốn có trong dân để làm lợi cho dân.", "B. Kết hợp xây dựng với bảo vệ, tiến hành, đồng thời hai nhiệm vụ chiến lược ở hai miền đất nước.", "C. Huy động nguồn vốn đầu tư nước ngoài.", "D. Thực hiện cải tạo xã hội cũ, xây dựng xã hội mới."], ans: 0 },
+            { id: 160, q: "Những năm 1923 - 1924, tại Liên Xô, Nguyễn Ái Quốc viết nhiều bài cho tờ báo nào của Đảng Cộng sản Liên Xô?", opts: ["A. Sự thật.", "B. Nhân đạo.", "C. Người cùng khổ.", "D. Thư tín quốc tế."], ans: 0 },
+            { id: 161, q: "'Trong thế giới bây giờ chỉ có [...] và thành công đến nơi, nghĩa là dân chúng được hưởng cái hạnh phúc tự do, bình đẳng thật...'", opts: ["A. Cách mạng Nga là cách mạng triệt để.", "B. Cách mạng Nga là đã thành công.", "C. Cách mạng Nga là làm cách mệnh đánh đổ tất cả đế quốc chủ nghĩa...", "D. Cách mạng Nga là đã giành thắng lợi."], ans: 1 },
+            { id: 162, q: "Tìm phương án đúng nhất với tư tưởng Hồ Chí Minh trong các câu sau đây:", opts: ["A. Thanh niên là người kế thừa cách mạng...", "B. Thanh niên là người tiếp nối cách mạng...", "C. Thanh niên là người tiếp sức cách mạng cho thế hệ thanh niên già, đồng thời là người phụ trách, dìu dắt thế hệ thanh niên tương lai.", "D. Thanh niên là người tiếp bước cách mạng..."], ans: 2 },
+            { id: 163, q: "Tìm một câu có nội dung không đúng trong các câu sau: Theo Hồ Chí Minh, nguyên tắc xây dựng chủ nghĩa xã hội trong thời kỳ quá độ là:", opts: ["A. Phải đoàn kết, học tập kinh nghiệm của các nước.", "B. Kết hợp cải tạo với xây dựng.", "C. Mọi tư tưởng, hành động phải được thực hiện trên nền tảng chủ nghĩa Mác - Lênin.", "D. Phải giữ vững độc lập dân tộc."], ans: 1 },
+            { id: 164, q: "Để tăng cường tính nghiêm minh của pháp luật đi đôi với đẩy mạnh giáo dục đạo đức cách mạng, Hồ Chí Minh đã kết hợp nhuần nhuyễn giữa:", opts: ["A. 'đức trị' và 'pháp trị'.", "B. 'đức trị và “nhân trị'.", "C. 'pháp trị và “dân trị'.", "D. 'nhân trị và “pháp trị”."], ans: 0 },
+            { id: 165, q: "'Đảng muốn vững phải có chủ nghĩa làm cốt...'. Chủ nghĩa mà Hồ Chí Minh nói ở đây là:", opts: ["A. Chủ nghĩa Mác - Lênin.", "B. Chủ nghĩa yêu nước.", "C. Chủ nghĩa dân tộc.", "D. Chủ nghĩa quốc tế."], ans: 0 },
+            { id: 166, q: "Trong nhà nước của dân, nhân dân thực thi quyền lực qua hình thức nào?", opts: ["A. Dân chủ trực tiếp và dân chủ gián tiếp.", "B. Hình thức phổ thông đầu phiếu, dân chủ trực tiếp.", "C. Dân chủ trực tiếp và dân chủ công khai.", "D. Hình thức phổ thông đầu phiếu và dân chủ gián tiếp."], ans: 0 },
+            { id: 167, q: "Trong bài 'Xây dựng con người của chủ nghĩa xã hội', Hồ Chí Minh nhấn mạnh: 'Đợt chỉnh huấn lần này là một cuộc vận động lớn về tư tưởng trong Đảng và trong nhân dân lao động nhằm':", opts: ["A. Xây dựng những con người của chủ nghĩa xã hội và có tác phong xã hội chủ nghĩa.", "B. Xây dựng những con người của chủ nghĩa xã hội.", "C. Xây dựng đất nước giàu mạnh, dân chủ, công bằng, văn minh.", "D. Xây dựng những con người có tác phong xã hội chủ nghĩa."], ans: 0 },
+            { id: 168, q: "Trong mấy điểm lớn trong Chính sách cán bộ, theo Hồ Chí Minh cần phải chú ý những gì?", opts: ["A. Hiểu biết cán bộ khéo dùng cán bộ, cất nhắc cán bộ, thương yêu cán bộ, phê bình cán bộ.", "B. Khéo dùng cán bộ, cất nhắc cán bộ.", "C. Hiểu biết cán bộ.", "D. Thương yêu và phê bình cán bộ."], ans: 0 },
+            { id: 169, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: Phải chú trọng 'đạo làm gương', bởi vì theo Hồ Chí Minh, 'Đối với các dân tộc phương Đông một tấm gương sống có giá trị hơn [...]'.", opts: ["A. Một trăm bài diễn văn tuyên truyền.", "B. Hàng trăm bài diễn văn tuyên truyền.", "C. Một trăm tủ sách.", "D. Hàng trăm hòm vàng."], ans: 0 },
+            { id: 170, q: "Nguyên tắc quan trọng bậc nhất trong xây dựng một nền đạo đức mới theo tư tưởng Hồ Chí Minh là:", opts: ["A. Nói đi đôi với làm, phải nêu gương về đạo đức.", "B. Phải tạo thành phong trào quần chúng rộng rãi.", "C. Xây đi đôi với chống.", "D. Tu dưỡng đạo đức suốt đời."], ans: 0 },
+            { id: 171, q: "Đâu là nhân tố thể hiện sự sáng tạo của Hồ Chí Minh trong quy luật ra đời của Đảng Cộng sản Việt Nam.", opts: ["A. Phong trào công nhân.", "B. Tất cả phương án.", "C. Phong trào yêu nước.", "D. Chủ nghĩa Mác Lênin."], ans: 2 },
+            { id: 172, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Chúng ta là những người lao động làm chủ nước nhà. Muốn làm chủ được tốt, phải có [...] làm chủ'.", opts: ["A. Tư cách.", "B. Tác phong.", "C. Quyết tâm.", "D. Năng lực."], ans: 3 },
+            { id: 173, q: "Theo Hồ Chí Minh, muốn xây dựng chủ nghĩ xã hội trước hết cần có:", opts: ["A. Tài nguyên thiên nhiên của đất nước", "B. Kinh tế phát triển", "C. Con người xã hội chủ nghĩa", "D. Khoa học - kỹ thuật tiên tiến"], ans: 2 },
+            { id: 174, q: "Tìm câu có nội dung không đúng trong các phương án dưới đây. Theo Hồ Chí Minh, mối quan hệ giữa độc lập dân tộc và chủ nghĩa xã hội là", opts: ["A. Chủ nghĩa xã hội là tiền đề thực hiện độc lập dân tộc", "B. Chủ nghĩa xã hội là điều kiện vững chắc để đảm bảo nền độc lập dân tộc", "C. Độc lập dân tộc là cơ sở, tiền đề để tiến lên chủ nghĩa xã hội", "D. Độc lập dân tộc và chủ nghĩa xã hội luôn gắn liền với nhau..."], ans: 0 },
+            { id: 175, q: "Theo Hồ Chí Minh, yêu cầu đối với người chiến sĩ văn hóa là", opts: ["A. Lập trường, tư tưởng vững vàng, đặt lợi ích của Tổ quốc, của dân tộc và nhân dân lên trên hết", "B. Phải chiến đấu dũng cảm và vì nhân dân mà phục vụ", "C. Phải thường xuyên rèn luyện", "D. Phải chiến đấu dũng cảm và có lập trường, tư tưởng vững vàng"], ans: 0 },
+            { id: 176, q: "Tập hợp những bài giảng của Nguyễn Ái Quốc tại Quảng Châu, Trung Quốc, được xuất bản thành tác phẩm nào sau đây.", opts: ["A. Con đường dẫn tôi tới Chủ nghĩa Mác - Lênin", "B. Sửa đổi lối làm việc", "C. Đường Cách mệnh", "D. Bản án chế độ thực dân Pháp"], ans: 2 },
+            { id: 177, q: "Theo Chủ tịch Hồ Chí Minh những căn bệnh nào gây mất đoàn kết, gây rối cho công tác", opts: ["A. Tham ô, lãng phí, quan liêu", "B. Tư túng, chia rẽ, kiêu ngạo", "C. Tất cả các phương án", "D. Độc quyền, đặc lợi"], ans: 1 },
+            { id: 178, q: "Điền từ hoặc cụm từ đúng vào dấu [..]: 'Vì lẽ sinh tồn cũng như mục đích của cuộc sống, loài người mới sáng tạo và phát minh ra ngôn ngữ, chữ viết, đạo đức, pháp luật... và [...]'", opts: ["A. Các hình thức biểu hiện", "B. Mọi hình thức thể hiện", "C. Các phương thức sử dụng", "D. Mọi phương tiện tồn tại"], ans: 2 },
+            { id: 179, q: "Theo Hồ Chí Minh, công nghiệp hóa xã hội chủ nghĩa chỉ có thể thực hiện thắng lợi trên cơ sở nào?", opts: ["A. Xây dựng và phát triển một nền nông nghiệp toàn diện, vững chắc và xây dựng một hệ thống tiểu thủ công nghiệp, công nghiệp nhẹ đa dạng", "B. Xây dựng một hệ thống tiểu thủ công nghiệp, công nghiệp nhẹ đa dạng", "C. Xây dựng một nền công nghiệp hiện đại", "D. Xây dựng và phát triển một nền nông nghiệp toàn diện, vững chắc"], ans: 0 },
+            { id: 180, q: "Theo Hồ Chí Minh, bản sắc dân tộc của nền văn hóa Việt Nam là gì", opts: ["A. Những giá trị văn hóa bền vững của cộng đồng các dân tộc Việt Nam, là thành quả của quá trình lao động, sản xuất, chiến đấu và giao lưu của con người Việt Nam", "B. Những thành quả mà dân tộc Việt Nam tạo ra trong quá trình sinh sống", "C. Những nhân tố tạo nên nét riêng của dân tộc Việt Nam", "D. Những phong tục tập quán của dân tộc Việt Nam"], ans: 0 },
+            { id: 181, q: "Khi nói về đoàn kết trong tôn giáo Hồ Chí Minh nhấn mạnh cần", opts: ["A. Phải đoàn kết chặt chẽ giữa đồng bào lương và đồng bào các tôn giáo, cùng nhau xây dựng đời sống hòa thuận ấm lo, xây dựng Tổ quốc", "B. Tất cả phương án", "C. Phải đoàn kết toàn dân, phụng sự tổ quốc", "D. Đoàn kết đồng bào các tôn giáo cùng xây dựng cuộc sống ẩm lo, hạnh phúc"], ans: 0 },
+            { id: 182, q: "Tìm một câu có nội dung không đúng trong các phương án sau: Theo Hồ Chí Minh, nguyên tắc xây dựng chủ nghĩa xã hội là trong thời kỳ quá độ là:", opts: ["A. Phải giữ vững độc lập dân tộc", "B. Phải đoàn kết, học tập kinh nghiệm của các nước", "C. Mọi tư tưởng, hành động phải được thực hiện trên nền tảng chủ nghĩa Mác-Lênin", "D. Kết hợp cải tạo với xây dựng"], ans: 3 },
+            { id: 183, q: "Trong cuộc kháng chiến chống thực dân pháp, Hồ Chí Minh chủ chương xây dựng ở Đông Dương một mặt trận đoàn kết. Mặt trận đó tên gọi là gì?", opts: ["A. Mặt trận thống nhất của ba nước Đông Dương", "B. Mặt trận dân tộc Việt Nam đoàn kết với Campuchia, Lào", "C. Mặt trận đoàn kết ba nước Việt-Miên-Lào", "D. Mặt trận đoàn kết Việt-Miên-Lào"], ans: 3 },
+            { id: 184, q: "Theo Hồ Chí Minh, người chiến sĩ văn nghệ phải có những tác phẩm văn nghệ", opts: ["A. Phù hợp với xu thế phát triển của thời đại", "B. Xứng đáng với tầm vóc dân tộc", "C. Mới mẻ, sáng tạo", "D. Xứng đáng với thời đại mới của đất nước và dân tộc"], ans: 3 },
+            { id: 185, q: "Để đoàn kết với phong trào cộng sản và công nhân quốc tế, Hồ Chí Minh chủ trương", opts: ["A. Giương cao ngọn cờ hòa bình và công lý", "B. Giương cao ngọn cờ độc lập dân tộc gắn liền với chủ nghĩa xã hội, thực hiện đoàn kết thống nhất trên nền tảng của chủ nghĩa Mác-Lênin và chủ nghĩa quốc tế vô sản, có lý, có tình...", "C. Giương cao ngọn cờ độc lập, tự do, trên nền tảng của chủ nghĩa Mác-Lênin", "D. Thực hiện đoàn kết thống nhất trên nền tảng của chủ nghĩa Mác-Lênin và chủ nghĩa quốc tế vô sản"], ans: 1 },
+            { id: 186, q: "Hồ Chí Minh khẳng định như thế nào về con đường cách mạng Việt Nam", opts: ["A. Hoàn thành cách mạng dân tộc, dân chủ nhân dân, tiến nhanh lên chủ nghĩa xã hội", "B. Tiến hành giải phóng dân tộc, hoàn thành cách mạng dân tộc dân chủ nhân dân tiến dần lên chủ nghĩa xã hội", "C. Tiến hành giải phóng dân tộc và đi lên chủ nghĩa tư bản", "D. Tiến hành giải phóng dân tộc, hoàn thành cách mạng dân tộc dân chủ nhân dân tiến nhanh lên chủ nghĩa tư bản"], ans: 1 },
+            { id: 187, q: "Khi nói về cơ sở xây dựng và hoạt động của Mặt trận dân tộc thống nhất Hồ Chí Minh nhận định", opts: ["A. Mặt trận là khối đoàn kết lâu dài, chặt chẽ, đoàn kết thực sự, chân thành, thân ái giúp đỡ nhau cùng tiến bộ", "B. Mặt trận là khối đoàn kết thật thà hợp tác và giúp đỡ lẫn nhau cùng tiến bộ, phát triển", "C. Mặt trận là khối đoàn kết lâu dài cần xóa bỏ hết mọi thành kiến...", "D. Tất cả phương án"], ans: 0 },
+            { id: 188, q: "Theo Hồ Chí Minh, 'phải chú ý khắc phục tệ độc đoán chuyên quyền, đồng thời phải chống lại cả tình trạng dựa vào tập thể, không dám quyết đoán, không dám chịu trách nhiệm trong cán bộ Đảng viên', khi thực hiện nguyên tắc nào sau đây?", opts: ["A. Cá nhân phụ trách", "B. Tập thể lãnh đạo", "C. Phê bình và tự phê bình", "D. Kỷ luật"], ans: 1 },
+            { id: 189, q: "Hồ Chí Minh nói: 'không có gì quý hơn độc lập tự do', trong hoàn cảnh nào?", opts: ["A. Trong khi xây dựng Nhà nước Việt Nam mới", "B. Khi đế quốc Mỹ mở rộng chiến tranh phá hoại miền Bắc", "C. Khi tiến hành tổng khởi nghĩa giành chính quyền", "D. Khi toàn quốc kháng chiến bùng nổ"], ans: 1 },
+            { id: 190, q: "Theo Hồ Chí Minh, để thực hiện đại đoàn kết dân tộc có nhiều phương pháp, trong đó cần lưu ý các phương pháp sau:", opts: ["A. Tuyên truyền, giáo dục, tổ chức, xử lý đồng bộ các mối quan hệ nhằm thực hiện thêm bạn bớt thù", "B. Tuyên truyền, giáo dục, vận động quần chúng, tổ chức, xử lý đồng bộ các mối quan hệ nhằm thực hiện thêm bạn bớt thù", "C. Tất cả các đáp án", "D. Tuyên truyền, giáo dục, vận động quần chúng, giác ngộ xử lý đồng bộ..."], ans: 1 },
+            { id: 191, q: "Trước khi trở thành chủ tịch nước, Hồ Chí Minh đã sống, học tập và hoạt động cách mạng ở bao nhiêu nước trên thế giới", opts: ["A. Gần 30 nước", "B. Gần 20 nước", "C. Gần 40 nước", "D. Không đáp án nào đúng"], ans: 0 },
+            { id: 192, q: "Theo Hồ Chí Minh về bước đi trong thời kỳ quá độ chúngạm phải", opts: ["A. Đi theo bước đi của Liên Xô", "B. Làm thật mau và rầm rộ", "C. Trải qua nhiều bước", "D. Tất cả các phương án trên đều đúng"], ans: 2 },
+            { id: 193, q: "Khẳng định Đảng Cộng sản “như người cầm lái' cho con thuyền cách mạng là quan điểm nhất quán của Hồ Chí Minh về vai trò gì của Đảng Cộng sản với cách mạng", opts: ["A. Chỉ đạo", "B. Tổ chức", "C. Lãnh đạo", "D. Định hướng"], ans: 2 },
+            { id: 194, q: "Hồ Chí Minh cho rằng xây dựng nhà nước trong sạch, vững mạnh cần", opts: ["A. Kiểm soát quyền lực Nhà nước", "B. Xây dựng đội ngũ cán bộ đảng viên vừa hồng, vừa chuyên", "C. Kiểm soát quyền lực Nhà nước, phòng chống tiêu cực trong Nhà nước", "D. Phòng chống tiêu cực trong Nhà nước"], ans: 2 },
+            { id: 195, q: "Theo Hồ Chí Minh mặt trận dân tộc thống nhất được xây dựng trên nền tảng liên minh công nhân nông dân trí thức đặt dưới sự lãnh đạo của", opts: ["A. Đảng Cộng sản", "B. Nhà nước và Đảng Cộng sản và các tổ chức chính trị - xã hội", "C. Đảng Cộng sản và nhà nước", "D. Nhà nước"], ans: 0 },
+            { id: 196, q: "Theo Hồ Chí Minh, mọi phương pháp tiếp cận và vận động quần chúng phải như thế nào", opts: ["A. Phải thuyết phục, tổ chức quần chúng", "B. Phù hợp với tâm tư, nguyện vọng của quần chúng", "C. Phải tôn trọng, lắng nghe quần chúng", "D. Phải lắng nghe tình cảm của quần chúng"], ans: 1 },
+            { id: 197, q: "Theo tư tưởng Hồ Chí Minh, Đảng Cộng sản Việt Nam là sản phẩm của sự kết hợp giữa", opts: ["A. Chủ nghĩa Mác-Lênin với phong trào công nhân và phong trào yêu nước", "B. Chủ nghĩa Mác-Lênin với phong trào công nhân", "C. Chủ nghĩa Mác với phong trào công nhân và phong trào yêu nước", "D. Phong trào công nhân với phong trào yêu nước"], ans: 0 },
+            { id: 198, q: "Đối với phong trào cộng sản và công nhân quốc tế Hồ Chí Minh giương cao ngọn cờ", opts: ["A. Độc lập dân tộc gắn liền với chủ nghĩa xã hội", "B. Độc lập, tự do và quyền bình đẳng giữa các dân tộc", "C. Hòa bình trong công lý", "D. Độc lập dân tộc gắn liền với chủ nghĩa tư bản"], ans: 0 },
+            { id: 199, q: "Có bao nhiêu cơ sở lý luận hình thành tư tưởng Hồ Chí Minh", opts: ["A. 3 cơ sở", "B. 2 cơ sở", "C. 4 cơ sở", "D. 5 cơ sở"], ans: 0 },
+            { id: 200, q: "Theo quan điểm Hồ Chí Minh, mỗi đảng viên và cán bộ phải thật sự thấm nhuần điều gì?", opts: ["A. Con đường cách mạng", "B. Tư tưởng cách mạng", "C. Lý tưởng cách mạng", "D. Đạo đức cách mạng"], ans: 3 },
+            { id: 201, q: "Đâu không phải là điều kiện để xây dựng khối đại đoàn kết toàn dân tộc theo tư tưởng Hồ Chí Minh?", opts: ["A. Phải kế thừa truyền thống yêu nước, nhân nghĩa, đoàn kết của dân tộc", "B. Phải đứng trên lập trường của giai cấp công nhân", "C. Phải có lòng khoan dung, độ lượng với con người", "D. Phải có niềm tin vào nhân dân"], ans: 1 },
+            { id: 202, q: "Cơ sở lý luận hình thành tư tưởng Hồ Chí Minh là:", opts: ["A. Chủ nghĩa yêu nước, đoàn kết, nhân ái", "B. Giá trị truyền thống tốt đẹp của dân tộc Việt Nam, tinh hoa văn hóa nhân loại, chủ nghĩa Mác-Lênin", "C. Giá trị truyền thống tốt đẹp của dân tộc Việt Nam, chủ nghĩa Mác-Lênin", "D. Tinh hoa văn hóa phương Đông và tinh hóa phương Tây"], ans: 1 },
+            { id: 203, q: "Hồ Chí Minh quan niệm chủ nghĩa xã hội là một chế độ xã hội có nền kinh tế:", opts: ["A. Công, nông, thương nghiệp hiện đại", "B. Phát triển gắn với sự phát triển của công, nông nghiệp", "C. Phát triển cao, dựa trên lực lượng sản xuất hiện đại và chế độ công hữu về tư liệu sản xuất chủ yếu", "D. Hiện đại gắn liền với sự phát triển của công nghiệp"], ans: 2 },
+            { id: 204, q: "Hồ Chí Minh cho rằng, nền giáo dục mới ở Việt Nam sẽ làm cho:", opts: ["A. Dân tộc chúng ta trở nên một dân tộc hùng mạnh", "B. Dân tộc chúng ta trở nên một dân tộc anh hùng", "C. Dân tộc chúng ta trở nên một dân tộc dũng cảm, yêu nước, yêu lao động, một dân tộc xứng đáng với nước Việt Nam độc lập", "D. Dân tộc chúng ta trở nên một dân tộc văn minh"], ans: 2 },
+            { id: 205, q: "Theo Hồ Chí Minh, tin dân đi liền với việc chống những bệnh gì?", opts: ["A. Bệnh xa dân, khinh dân, sợ dân, tự kiêu tự mãn", "B. Tư túng, chia rẽ, kiêu ngạo", "C. Tham ô, lãng phí, quan liêu", "D. Đặc quyền, đặc lợi"], ans: 0 },
+            { id: 206, q: "Theo Hồ Chí Minh tiêu chí tiếp thu tinh hoa văn hóa nhân loại là:", opts: ["A. Cái gì hiện đại thì ta làm theo", "B. Có cái gì mới chúng muốn phải làm theo", "C. Có cái gì khác biệt thì phải học", "D. Có cái gì hay, cái gì tốt là ta học lấy, phải lấy văn hóa dân tộc làm gốc"], ans: 3 },
+            { id: 207, q: "Chuẩn mực đạo đức cao đẹp nhất theo tư tưởng Hồ Chí Minh là:", opts: ["A. Thương yêu con người, sống có nghĩa khí", "B. Thương yêu con người, sống có lí, có tình", "C. Quý trọng con người, sống có nghĩa, có tình", "D. Thương yêu con người, sống có tình nghĩa"], ans: 3 },
+            { id: 208, q: "Hồ Chí Minh cho rằng quá độ lên chủ nghĩa xã hội ở Việt Nam phải tiến hành:", opts: ["A. Tiến nhanh nhưng không chủ quan nóng vội", "B. Tiến nhanh, tiến mạnh, tiến vững chắc", "C. Dần dần, thận trọng trong từng bước một", "D. Nhanh chóng, chính xác từng bước một"], ans: 2 },
+            { id: 209, q: "Theo Hồ Chí Minh, văn hóa văn nghệ góp phần nâng cao:", opts: ["A. Lòng thương yêu con người sâu sắc", "B. Lòng tự hào dân tộc", "C. Lòng yêu nước, lý tưởng, tình cảm cách mạng, sự lạc quan, ý chí, quyết tâm và niềm tin vào thắng lợi cuối cùng của cách mạng", "D. Lòng tự tôn dân tộc"], ans: 2 },
+            { id: 210, q: "Theo Hồ Chí Minh, nội dung của tiếp thu tinh hoa văn hóa nhân loại là:", opts: ["A. Cả những mặt tích cực và hạn chế của văn hóa nhân loại", "B. Những giá trị văn hóa phương Đông", "C. Toàn diện bao gồm các giá trị tiến bộ Đông, Tây, kim, cổ, tất cả các mặt, các khía cạnh", "D. Những giá trị văn hóa phương Tây"], ans: 2 },
+            { id: 211, q: "Vì sao Nguyễn Ái Quốc tán thành Đệ tam quốc tế (Quốc tế III - Quốc tế Cộng sản)?", opts: ["A. Quốc tế II phân rã", "B. Quốc tế III quan tâm đến vấn đề thuộc địa", "C. Đảng Cộng sản Pháp phân liệt", "D. Quốc tế III đấu tranh cho giai cấp tư sản"], ans: 1 },
+            { id: 212, q: "Theo Hồ Chí Minh, 'kẻ địch nguy hiểm của chủ nghĩa xã hội' là:", opts: ["A. Chủ nghĩa đế quốc", "B. Chủ nghĩa dân tộc hẹp hòi", "C. Chủ nghĩa cá nhân", "D. Chủ nghĩa tư bản"], ans: 2 },
+            { id: 213, q: "Chọn câu trả lời đúng nhất theo tư tưởng Hồ Chí Minh, xây dựng Đảng là:", opts: ["A. Quy luật ra đời của Đảng", "B. Quy luật sống còn của cách mạng", "C. Quy luật quyết định sự thành công của Đảng trong quá trình lãnh đạo cách mạng", "D. Quy luật tồn tại và phát triển của Đảng"], ans: 3 },
+            { id: 214, q: "Tìm câu trả lời sai trong những câu sau: theo Hồ Chí Minh:", opts: ["A. Độc lập dân tộc phải gắn liền tự do, cơm no, áo ấm và hạnh phúc của nhân dân", "B. Độc lập, tự do là quyền thiêng liêng, bất khả xâm phạm của tất cả các dân tộc", "C. Độc lập, tự do là quyền thiêng liêng của một số dân tộc", "D. Độc lập dân tộc phải là nền độc lập thực sự, hoàn toàn và triệt để"], ans: 2 },
+            { id: 215, q: "Kết luận: 'Muốn được giải phóng, các dân tộc chỉ có thể trông cậy vào chính mình, trông cậy vào lực lượng của bản thân mình', được Hồ Chí Minh đưa ra khi nào?", opts: ["A. Nhìn thấy sự thất bại của phong trào đấu tranh giải phóng dân tộc theo khuynh hướng dân chủ tư sản", "B. Hoạt động ở các nước châu Phi", "C. Tất cả phương án", "D. Bản yêu sách 8 điểm của nhân dân An Nam gửi đến hội nghị Vecsxay (1919) không được chấp thuận"], ans: 3 },
+            { id: 216, q: "Từ những cuộc bàn cãi của các chi bộ Đảng Xã hội Pháp, điều mà Nguyễn Ái Quốc muốn được nghe người ta thảo luận nhất là gì? (Tác phẩm “Con đường dẫn tôi đến chủ nghĩa Lênin”)", opts: ["A. Quốc tế hai rưỡi bênh vực nhân dân thuộc địa", "B. Quốc tế II có thể chống lại chủ nghĩa đế quốc", "C. Tất cả phương án", "D. Quốc tế nào bênh vực nhân dân các nước thuộc địa"], ans: 3 },
+            { id: 217, q: "Theo Hồ Chí Minh, Mặt trận dân tộc thống nhất và vấn đề liên minh công - nông luôn được Người xem xét trong mối quan hệ:", opts: ["A. Tất cả phương án", "B. Biện chứng giữa dân tộc và giai cấp", "C. Biện chứng giữa giai cấp với mặt trận", "D. Biện chứng giữa toàn dân với Đảng"], ans: 1 },
+            { id: 218, q: "Theo tư tưởng Hồ Chí Minh, động lực văn hóa thể hiện trên phương diện nào? (Văn hóa là động lực của cách mạng)", opts: ["A. Văn hóa chính trị, văn hóa nghệ thuật, văn hóa giáo dục", "B. Văn hóa đạo đức, lối sống, văn hóa pháp luật", "C. Văn hóa văn nghệ, văn hóa giáo dục, văn hóa đạo đức, văn hóa pháp luật", "D. Văn hóa chính trị, văn hóa văn nghệ, văn hóa giáo dục, văn hóa đạo đức, lối sống, văn hóa pháp luật"], ans: 3 },
+            { id: 219, q: "Theo Hồ Chí Minh, nền tảng tư tưởng của Đảng Cộng sản Việt Nam là:", opts: ["A. Tinh hoa dân tộc và văn hóa nhân loại", "B. Chủ nghĩa Mác-Lênin", "C. Tinh hoa văn hóa nhân loại", "D. Tinh hoa văn hóa dân tộc Việt Nam"], ans: 1 },
+            { id: 220, q: "Theo Hồ Chí Minh, chính sách ngoại giao của nước Việt Nam sau khi giành được độc lập năm 1945 là:", opts: ["A. Mềm dẻo về sách lược để làm bạn với tất cả mọi nước dân chủ và không gây thù oán với một ai", "B. Thân thiện với tất cả các nước dân chủ trên thế giới để giữ gìn hòa bình", "C. Độc lập, tự chủ và mềm dẻo về sách lược với tất cả các nước", "D. Độc lập, làm bạn với tất cả mọi nước dân chủ và không gây thù oán với một ai"], ans: 1 },
+            { id: 221, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: Theo giáo trình tư tưởng Hồ Chí Minh, Điều 1 của Hiến pháp 1946 nêu rõ: 'Nước Việt Nam là một nước dân chủ cộng hòa, tất cả [...] là của toàn thể nhân dân Việt Nam, không phân biệt nòi giống, gái trai, giàu nghèo, giai cấp, tôn giáo'.", opts: ["A. Quyền bính", "B. Quyền bính trong nước", "C. Quyền lực", "D. Quyền lực trong nước"], ans: 1 },
+            { id: 222, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: Đánh giá về những cống hiến của Hồ Chí Minh, tiến sĩ M.Amet, Giám đốc Unesco, khu vực châu Á-Thái Bình Dương đã nhận định: 'Chỉ có ít nhân lịch sử trở thành một bộ phận của [...] ngay khi còn sống và rõ ràng Hồ Chí Minh là một trong số đó'.", opts: ["A. Huyền thoại", "B. Thời đại", "C. Nhân loại", "D. Tinh hoa văn hóa nhân loại"], ans: 0 },
+            { id: 223, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: Theo Hồ Chí Minh, '[...] là quyền thiêng liêng, bất khả xâm phạm của tất cả các dân tộc'.", opts: ["A. Độc lập, tự do", "B. Độc lập dân tộc", "C. Quyền dân chủ của nhân dân", "D. Quyền tự quyết dân tộc"], ans: 0 },
+            { id: 224, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Thanh niên là người chủ tương lai của nước nhà. Thật vậy, nước nhà [...], yếu hay mạnh một phần lớn là do các thanh niên'.", opts: ["A. Giàu hay nghèo", "B. Lớn hay nhỏ", "C. Phát triển", "D. Thịnh hay suy"], ans: 3 },
+            { id: 225, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Trong thế giới bây giờ chỉ có [...] và thành công đến nơi, nghĩa là dân chúng được hưởng cái hạnh phúc tự do, bình đẳng thật...'", opts: ["A. Cách mạng Nga là làm cách mạng đánh đổ tất cả đế quốc chủ nghĩa và tư bản trong thế giới", "B. Cách mạng Nga là đã thành công", "C. Cách mạng Nga là cách mạng triệt để", "D. Cách mạng Nga là đã giành thắng lợi"], ans: 2 },
+            { id: 226, q: "Theo Hồ Chí Minh, thanh niên phải xung phong hăng hái thực hiện khẩu hiệu:", opts: ["A. Đâu cần thanh niên có, đâu khó thanh niên làm", "B. Đâu cần thanh niên có, đâu khó thanh niên đi đâu", "C. Đâu cần thanh niên có, đâu khó có thanh niên", "D. Đâu cần thanh niên có, đâu khó thanh niên xung phong"], ans: 0 },
+            { id: 227, q: "Hồ Chí Minh đã tiếp thu các giá trị về quyền sống, quyền tự do, quyền mưu cầu hạnh phúc từ những tác phẩm nào?", opts: ["A. Tuyên ngôn của nước Anh", "B. Tuyên ngôn nhân quyền và dân quyền của nước Pháp, Tuyên ngôn độc lập của nước Mỹ", "C. Tuyên ngôn độc lập của nước Mỹ", "D. Tuyên ngôn nhân quyền và dân quyền của cách mạng Pháp"], ans: 2 },
+            { id: 228, q: "Theo Hồ Chí Minh, Đảng Cộng sản mà chúng ta xây dựng phải:", opts: ["A. Dựa trên chủ nghĩa Mác", "B. Lấy chủ nghĩa Mác-Lênin làm cốt", "C. Dựa vào lý luận của Lênin", "D. Lấy chủ nghĩa Mác-Lênin là kim chỉ nam"], ans: 1 },
+            { id: 229, q: "Trong tác phẩm 'Chính phủ là công bộc của dân', theo Chủ tịch Hồ Chí Minh, những viên chức trong Ủy ban không được lợi dụng danh nghĩa Ủy ban để:", opts: ["A. Gây bè tìm cánh, để hãm hại người khác", "B. Kéo bè kết cánh, đưa người trong nhà vào làm việc với mình", "C. Gây bè tìm cánh, đưa người trong nhà trong họ vào làm việc với mình", "D. Kéo bè kết cánh, để trục lợi cho bản thân"], ans: 2 },
+            { id: 230, q: "Sáng tạo lớn nhất trong tư tưởng Hồ Chí Minh về cách mạng giải phóng dân tộc thuộc địa là gì?", opts: ["A. Xác định lực lượng cách mạng giải phóng dân tộc là toàn dân tộc", "B. Đảng Cộng sản lãnh đạo", "C. Cách mạng giải phóng dân tộc được tiến hành chủ động, sáng tạo và có khả năng giành thắng lợi trước cách mạng vô sản ở chính quốc", "D. Tiến hành bằng con đường bạo lực cách mạng"], ans: 2 },
+            { id: 231, q: "Theo Hồ Chí Minh, 'Lấy gương [...] để hằng ngày giáo dục lẫn nhau là một trong cách tốt nhất để xây dựng Đảng, xây dựng các tổ chức cách mạng...'", opts: ["A. Người cách mạng", "B. Người thành công", "C. Người tốt, việc tốt", "D. Gương điển hình tiên tiến"], ans: 2 },
+            { id: 232, q: "Theo Chủ tịch Hồ Chí Minh căn bệnh nào không những chỉ có ở cấp Trung ương, ở cấp tỉnh, ở cấp huyện mà còn có cả ở cấp cơ sở?", opts: ["A. Bệnh tham ô", "B. Bệnh lãng phí", "C. Tất cả phương án", "D. Bệnh quan liêu"], ans: 2 },
+            { id: 233, q: "Theo quan điểm của Hồ Chí Minh, tính chất của nền văn hóa mới là (Quan điểm về xây dựng nền văn hóa mới qua các thời kỳ-Trong kháng chiến chống thực dân Pháp)?", opts: ["A. Dân tộc, tính đảng và tính nhân dân", "B. Dân tộc, khoa học và đại chúng", "C. Dân tộc, khoa học và xã hội chủ nghĩa", "D. Dân tộc, khoa học và quần chúng"], ans: 1 },
+            { id: 234, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Nước Việt Nam là một khối thống nhất về mặt [...] và không một lực lượng nào trên thế giới có thể chia cắt nổi Việt Nam'.", opts: ["A. Lãnh thổ", "B. Chính trị", "C. Dân tộc, lịch sử và kinh tế", "D. Tư tưởng"], ans: 0 },
+            { id: 235, q: "Nét đặc sắc trong quan niệm của Hồ Chí Minh về con người Việt Nam là gì?", opts: ["A. Xem xét con người trong sự thống nhất giữa các mặt đối lập", "B. Xem xét con người như một chỉnh thể thống nhất về tâm lực, thể lực và các hoạt động", "C. Nhìn nhận đặc điểm con người Việt Nam trong những điều kiện lịch sử cụ thể, gắn với cấu trúc kinh tế, xã hội", "D. Xem xét con người là một thể thống nhất trong tính đa dạng của nó"], ans: 2 },
+            { id: 236, q: "Cách thức Hồ Chí Minh tiếp thu lý luận chủ nghĩa Mác-Lênin:", opts: ["A. Có kế thừa một số nội dung nhất định", "B. Có lựa chọn, vận dụng một số nội dung", "C. Có chọn lọc, không rập khuôn máy móc, không sao chép giáo điều", "D. Dựa vào những kết luận trong sách vở"], ans: 2 },
+            { id: 237, q: "Theo Hồ Chí Minh, trong Nhà nước của dân, quyền lực nhà nước là:", opts: ["A. Thừa ủy quyền của Đảng", "B. Thừa ủy quyền của nhân dân", "C. Thừa ủy quyền của Chính phủ", "D. Thừa ủy quyền của Quốc hội"], ans: 1 },
+            { id: 238, q: "Tìm một câu có nội dung không đúng trong những phương án sau. Theo Hồ Chí Minh, nhiệm vụ lịch sử của thời kì quá độ ở Việt Nam là:", opts: ["A. Xây dựng nền tảng vật chất và kĩ thuật của chủ nghĩa xã hội", "B. Xây dựng chủ nghĩa xã hội mang tính quốc tế", "C. Cải tạo xã hội cũ và xây dựng xã hội mới, trong đó lấy xây dựng làm trọng tâm...", "D. Xây dựng các tiền đề về kinh tế, chính trị, văn hóa, tư tưởng cho chủ nghĩa xã hội"], ans: 1 },
+            { id: 239, q: "Chọn đáp án sai theo tư tưởng Hồ Chí Minh về những nguyên tắc xây dựng Đảng cộng sản Việt Nam:", opts: ["A. Tự phê bình và phê bình", "B. Tập trung dân chủ", "C. Đoàn kết thống nhất trong đảng", "D. Thiểu số phục tùng đa số"], ans: 3 },
+            { id: 240, q: "Đọc và làm rõ nội dung sau: 'Trong cuộc đấu tranh, vừa nghiên cứu lý luận Mác-Lênin, vừa làm công tác thực tế, dần dần tôi hiểu được rằng...'", opts: ["A. Tất cả phương án", "B. Sự tổng kết lý luận và kinh nghiệm thực tiễn, để tìm ra con đường cứu nước của Hồ Chí Minh", "C. Hồ Chí Minh tìm thấy tính ưu việt của chế độ xã hội mới là chủ nghĩa cộng sản", "D. Khẳng định, chủ nghĩa nhiều, học thuyết nhiều nhưng chỉ có học thuyết Mác-Lênin..."], ans: 1 },
+            { id: 241, q: "Theo Hồ Chí Minh, cả dân tộc hay toàn dân chỉ trở thành lực lượng cách mạng to lớn, trở thành sức mạnh vô địch khi được:", opts: ["A. Giác ngộ về mục tiêu chiến đấu chung, được tổ chức thành một khối vững chắc và hoạt động theo một đường lối chính trị đúng đắn", "B. Giác ngộ về mục tiêu chiến đấu chung, được tổ chức thành tập thể vững chắc...", "C. Giác ngộ về mục tiêu cách mạng, được tổ chức lại thành một mặt trận vững chắc...", "D. Giác ngộ về mục tiêu chiến đấu chung, được tổ chức thành một khối vững chắc..."], ans: 0 },
+            { id: 242, q: "Để thực thi được pháp luật trong cuộc sống theo Hồ Chí Minh cần làm gì?", opts: ["A. Cán bộ các cấp các ngành phải gương mẫu trong việc thực thi pháp luật...", "B. Nâng cao dân trí, phát huy tính tích cực chính trị của nhân dân", "C. Tính nghiêm minh của pháp luật", "D. Tất cả các đáp án đều đúng"], ans: 3 },
+            { id: 243, q: "Theo Hồ Chí Minh, Đảng Cộng sản Việt Nam phải lấy chủ nghĩa Mác-Lênin 'làm cốt' nghĩa là:", opts: ["A. Đảng Cộng sản Việt Nam phải lấy chủ nghĩa Mác-Lênin làm chủ trương, đường lối", "B. Tất cả các đáp án đều đúng", "C. Đảng Cộng sản Việt Nam phải lấy chủ nghĩa Mác- Lênin làm nền tảng tư tưởng", "D. Đảng Cộng sản Việt Nam phải lấy chủ nghĩa Mác- Lênin làm học thuyết của Đảng"], ans: 2 },
+            { id: 244, q: "Hồ Chí Minh đã dùng hình tượng nào dưới đây để chỉ chủ nghĩa tư bản?", opts: ["A. Tất cả các đáp đều sai", "B. Con đỉa hai vòi", "C. Con bạch tuộc", "D. Con chim đại bàng"], ans: 1 },
+            { id: 245, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Văn hóa [...] cho quốc dân đi'", opts: ["A. Dẫn đường", "B. Soi đường", "C. Mở đường", "D. Chỉ đường"], ans: 1 },
+            { id: 246, q: "Quan niệm của Hồ Chí Minh về phương châm xây dựng chủ nghĩa xã hội được hình thành trên cơ sở nào?", opts: ["A. Chủ nghĩa Tam dân của Tôn Trung Sơn", "B. Chủ nghĩa Mác-Lenin và thực tiễn Việt Nam", "C. Thực tiễn xây dựng chủ nghĩa xã hội ở Việt Nam", "D. Chủ nghĩa Mác-Lênin"], ans: 1 },
+            { id: 247, q: "Tìm câu đúng nhất được trích trong định nghĩa tư tưởng Hồ Chí Minh theo quan điểm của đại hội XI:", opts: ["A. Là kết quả của sự vận dụng sáng tạo chủ nghĩa Mác- Lênin vào điều kiện cụ thể nước ta", "B. Là kết quả của sự vận dụng và phát triển sáng tạo chủ nghĩa Mác-Lênin vào điều kiện cụ thể nước ta", "C. Là kết quả của sự vận dụng sáng tạo và phát triển chủ nghĩa Mác-Lênin...", "D. Là kết quả của sự vận dụng sáng tạo và phát triển chủ nghĩa Mác-Lênin..."], ans: 1 },
+            { id: 248, q: "Theo Hồ Chí Minh, sự phát triển cao về văn hóa và đạo đức của chủ nghĩa xã hội thể hiện trước hết ở nội dung nào?", opts: ["A. Trong việc ứng dụng các thành tựu khoa học, kỹ thuật", "B. Trong sự phát triển kinh tế", "C. Trong các quan hệ xã hội", "D. Trong ý thức của con người"], ans: 2 },
+            { id: 249, q: "Theo Chủ tịch Hồ Chí Minh giải pháp căn bản và có ý nghĩa lâu dài đề phòng, chống tiêu cực trong Nhà nước là:", opts: ["A. Nâng cao trình độ dân chủ trong xã hội, thực hành dân chủ rộng rãi, phát huy quyền làm chủ của nhân dân", "B. Cán bộ phải đi trước làm gương, cán bộ giữ chức vụ càng cao, trách nhiệm nêu gương càng lớn", "C. Tất cả các phương án", "D. Pháp luật của Nhà nước, kỷ luật của Đảng phải nghiêm minh"], ans: 0 },
+            { id: 250, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Đoàn kết trong Mặt trận Việt Minh, nhân dân ta đã làm cách mạng Tháng Tám thành công, lập nên nước [...]'", opts: ["A. Cộng hòa xã hội chủ nghĩa Việt Nam", "B. Việt Nam Dân chủ Cộng hòa", "C. Việt Nam Cộng hòa", "D. Cộng hòa Dân chủ Việt Nam"], ans: 1 },
+            { id: 251, q: "Theo Hồ Chí Minh, mối quan hệ giữa Đảng với nhân dân là mối quan hệ như thế nào?", opts: ["A. Gắn bó mật thiết", "B. Biện chứng", "C. Máu thịt", "D. Như cá với nước"], ans: 2 },
+            { id: 252, q: "Theo tư tưởng Hồ Chí Minh, người thực thi pháp luật đúng là phải:", opts: ["A. Bảo vệ được lợi ích của Đảng cầm quyền", "B. Thực sự nghiêm minh và tự giác", "C. Công tâm và duy trì sự cầm quyền của Đảng", "D. Thực sự công tâm và nghiêm minh"], ans: 3 },
+            { id: 253, q: "Điền từ hoặc cụm từ đúng vào dấu [...]: 'Dân tộc cách mệnh thì chưa phân giai cấp, nghĩa là [...] đều nhất trí chống lại cường quyền'", opts: ["A. Toàn thể nhân dân", "B. Công, nông, binh", "C. Giai cấp địa chủ phong kiến và nông dân", "D. Sĩ, nông, công, thương"], ans: 3 },
+            { id: 254, q: "Theo Hồ Chí Minh, Chủ nghĩa Mác có ưu điểm là:", opts: ["A. Chính sách của nó phù hợp với điều kiện nước ta", "B. Lòng nhân ái cao cả", "C. Phương pháp làm việc biện chứng", "D. Sự tu dưỡng đạo đức cá nhân"], ans: 2 },
+            { id: 255, q: "Bản hiệp ước nào đánh dấu sự đầu hàng hoàn toàn của triều đình phong kiến nhà Nguyễn trước thực dân Pháp xâm lược?", opts: ["A. Hiệp ước Héc măng (1883)", "B. Hiệp ước Nhâm Tuất (1862)", "C. Hiệp ước Patơnốt (1884)", "D. Hiệp ước Giáp Tuất (1874)"], ans: 2 },
+            { id: 256, q: "Đặc điểm nổi bật của bối cảnh lịch sử Việt Nam cuối thế kỷ XIX, đầu thế kỷ XX là gì?", opts: ["A. Nhà nước mới ra đời", "B. Đời sống nhân dân từng bước được cải thiện", "C. Thực dân Pháp xâm lược nước ta, triều đình Nhà Nguyễn từng bước khuất phục và đầu hàng", "D. Các phong trào đấu tranh của nhân dân ta diễn ra giành thắng lợi"], ans: 2 },
+            { id: 257, q: "Tác phẩm nào sau đây của Nguyễn Ái Quốc được xem là tác phẩm lý luận đầu tiên của cách mạng Việt Nam?", opts: ["A. Vi hành", "B. Bản án chế độ thực dân Pháp", "C. Đường cách mệnh", "D. Chánh cương vắn tắt của Đảng, Sách lược vắn tắt"], ans: 2 },
+            { id: 258, q: "Nội dung nào không đúng với tư tưởng Hồ Chí Minh về thái độ, phương pháp tự phê bình và phê bình?", opts: ["A. Phải thẳng thắn, chân thành, trung thực, không nể nang...", "B. Phải tiến hành thường xuyên như người ta rửa mặt hàng ngày", "C. Phải có tình thương yêu lẫn nhau", "D. Phải khéo léo, biến hóa cho phù hợp"], ans: 3 },
+            { id: 259, q: "Theo Hồ Chí Minh, chiến lược 'trồng người' là:", opts: ["A. Rất quan trọng trong sự nghiệp phát triển kinh tế-xã hội", "B. Rất cần thiết, luôn mang tính chiến lực", "C. Chiến lược quan trọng hàng đầu trong quá trình phát triển của đất nước", "D. Một trọng tâm, một bộ phận hợp thành của chiến lược phát triển kinh tế - xã hội"], ans: 2 },
+            { id: 260, q: "Chủ tịch Hồ Chí Minh khẳng định con người là mục tiêu của cách mạng trong những giai đoạn nào?", opts: ["A. Giải phóng dân tộc, xây dựng chế độ dân chủ nhân dân", "B. Giải phóng dân tộc và tiến dần lên xã hội chủ nghĩa", "C. Xây dựng chế độ dân chủ nhân dân và tiến dần lên xã hội chủ nghĩa", "D. Giải phóng dân tộc, xây dựng chế độ dân chủ nhân dân và tiến dần lên xã hội chủ nghĩa"], ans: 3 },
+            { id: 261, q: "Chủ tịch Hồ Chí Minh đã trực tiếp chỉ đạo biên soạn những Hiến pháp nào của nước ta?", opts: ["A. Hiến pháp năm 1959", "B. Hiến pháp năm 1946", "C. Hiến pháp năm 1959 và 1982", "D. Hiến pháp năm 1946 và 1959"], ans: 3 },
+            { id: 262, q: "Luận điểm sau của Hồ Chí Minh nhằm nói về: 'Đoàn kết, đoàn kết, đại đoàn kết / Thành công, thành công, đại thành công'", opts: ["A. Vai trò của đại đoàn kết", "B. Hình thức đại đoàn kết", "C. Nguyên tắc đại đoàn kết", "D. Tính chất đại đoàn kết"], ans: 0 },
+            { id: 263, q: "Ngày 26/1/1946, Chủ tịch Hồ Chí Minh ký lệnh nói rõ tội tham ô, trộm cắp là tội gì?", opts: ["A. Tử hình", "B. Phạt tù trên 20 năm", "C. Chung thân", "D. Phạt tù từ 5 năm đến 20 năm"], ans: 0 },
+            { id: 264, q: "Tư tưởng Hồ Chí Minh về lực lượng cách mạng giải phóng dân tộc có cơ sở lý luận từ:", opts: ["A. Thực tiễn tập hợp lực lượng cách mạng của các vị lãnh đạo cách mạng tiền bối", "B. Kinh nghiệm lãnh đạo cách mạng của các Đảng Cộng sản", "C. Quan điểm của chủ nghĩa Mác-Lênin: Cách mạng là sư nghiệp của quần chúng", "D. Thực tiễn phong trào cách mạng thế giới"], ans: 2 },
+            { id: 265, q: "Chọn từ thích hợp điền vào chỗ trống: Đảng là Đảng của giai cấp công nhân và nhân dân lao động, nghĩa là [...] kiên quyết nhất, hăng hái nhất, trong sạch nhất...", opts: ["A. Dân thuộc địa bị áp bức, bóc lột", "B. Vô sản", "C. Thợ thuyền, dân cày và lao động trí óc", "D. Giỏi nhất, có học thức nhất"], ans: 2 },
+            { id: 266, q: "Trong thời kỳ xây dựng xã hội chủ nghĩa ở miền Bắc, theo Hồ Chí Minh nền văn hóa nước ta phải?", opts: ["A. Tiên tiến, đậm đà bản sắc dân tộc", "B. Mang tính Đảng và tính nhân dân", "C. Dân chủ và tiến bộ", "D. Xã hội chủ nghĩa về nội dung và dân tộc về hình thức"], ans: 3 },
+            { id: 267, q: "Hồ Chí Minh đã phê phán những yếu tố duy tâm, lạc hậu, phản động nào của Nho giáo?", opts: ["A. Tư tưởng đẳng cấp", "B. Khinh lao động chân tay", "C. Cả 3 đáp án", "D. Coi thường phụ nữ"], ans: 2 },
+            { id: 268, q: "Nguyễn Ái Quốc dự Đại hội V của Quốc tế Cộng sản vào năm nào?", opts: ["A. 1924", "B. 1923", "C. 1925", "D. 1922"], ans: 0 },
+            { id: 269, q: "Theo Hồ Chí Minh 'nọc độc và sức sống của con rắn độc tư bản chủ nghĩa' đang tập trung chủ yếu ở đâu?", opts: ["A. Các nước châu Phi", "B. Các nước châu Á", "C. Các nước thuộc địa", "D. Các nước đế quốc"], ans: 2 },
+            { id: 270, q: "Chủ tịch Hồ Chí Minh nói: 'Chúng ta thà hi sinh tất cả, chứ nhất định không chịu mất nước, không chịu làm nô lệ' vào thời gian nào?", opts: ["A. 19/12/1946", "B. 18/12/1946", "C. 18/12/1945", "D. 19/12/1945"], ans: 0 },
+            { id: 271, q: "Chủ nghĩa xã hội là công trình tập thể của [...], do nhân dân tự xây dựng lấy, dưới sự lãnh đạo của Đảng.", opts: ["A. Đảng viên", "B. Nhân dân", "C. Quần chúng", "D. Công nông"], ans: 1 },
+            { id: 272, q: "Theo Hồ Chí Minh, nhân tố tạo nên sức hấp dẫn của chủ nghĩa xã hội là gì ?", opts: ["A. Tính công bằng", "B. Nền dân chủ triệt để", "C. Đạo đức", "D. Kinh tế"], ans: 2 },
+            { id: 273, q: "Khi xác định vị trí và xu hướng vận động của từng thành phần kinh tế trong thời kỳ quá độ, Hồ Chí Minh ưu tiên phát triển thành phần kinh tế nào?", opts: ["A. Tư sản công thương", "B. Kinh tế hợp tác xã", "C. Kinh tế cá nhân", "D. Kinh tế quốc doanh"], ans: 3 },
+            { id: 274, q: "[...] là gốc của mọi công việc", opts: ["A. Đạo đức", "B. Cán bộ", "C. Năng lực", "D. Nhân dân"], ans: 1 },
+            { id: 275, q: "Một Đảng tiên phong cách mạng nếu chỉ có đạo đức thôi chưa đủ, mà còn phải là [...].", opts: ["A. Yêu nước", "B. Năng lực", "C. Có tài", "D. Văn minh"], ans: 3 },
+            { id: 276, q: "Huấn luyện [...] là công việc gốc của Đảng", opts: ["A. Cán bộ", "B. Đảng viên", "C. Nhân sự", "D. Quần chúng"], ans: 0 },
+            { id: 277, q: "Đoàn kết thống nhất trong phong trào cộng sản và công nhân quốc tế thì đoàn kết [...] là điều kiện quan trọng nhất...", opts: ["A. Quốc tế", "B. Cộng sản", "C. Giữa các Đảng", "D. Giữa các Đảng Cộng sản"], ans: 3 },
+            { id: 278, q: "Mọi hoạt động của văn hóa phải trở về với [...] của quần chúng, phản ánh được tư tưởng và khát vọng của quần chúng.", opts: ["A. Thực tại", "B. Hiện thực", "C. Cuộc sống", "D. Thực trạng"], ans: 2 },
+            { id: 279, q: "Bộ phận nào không thuộc khối đại đoàn kết dân tộc:", opts: ["A. Đoàn kết các giai cấp, tầng lớp và những người Việt Nam định cư ở nước ngoài", "B. Đoàn kết tôn giáo", "C. Đoàn kết khối vô sản", "D. Đoàn kết trong Đảng"], ans: 3 },
+            { id: 280, q: "Đâu không phải là điều kiện để thực hiện đại đoàn kết dân tộc?", opts: ["A. Phải có niềm tin vào nhân dân", "B. Phải biết yêu thương lẫn nhau", "C. Phải kế thừa truyền thống yêu nước - nhân nghĩa - đoàn kết của dân tộc", "D. Phải có lòng khoan dung, độ lượng với con người"], ans: 1 },
+            { id: 281, q: "Trong các nguyên tắc xây dựng Đảng, nguyên tắc nào là nguyên tắc sinh hoạt Đảng?", opts: ["A. Phê bình và tự phê bình", "B. Tập trung dân chủ", "C. Tập thể lãnh đạo, cá nhân phụ trách", "D. Kỷ luật nghiêm minh, tự giác"], ans: 0 },
+            { id: 282, q: "Theo quan điểm của Hồ Chí Minh, nền tảng của khối đại đoàn kết dân tộc là?", opts: ["A. Liên minh công nông và lao động trí óc", "B. Liên minh công nông", "C. Liên minh công nông và các tầng lớp lao động khác", "D. Liên minh công nông và các lực lượng yêu nước khác"], ans: 0 },
+            { id: 283, q: "Hồ Chí Minh lấy bút danh Nguyễn Ái Quốc từ năm nào?", opts: ["A. 1918", "B. 1919", "C. 1920", "D. 1921"], ans: 1 },
+            { id: 284, q: "Hồ Chí Minh lấy bút danh là Nguyễn Tất Thành vào thời gian nào?", opts: ["A. 1901", "B. 1902", "C. 1903", "D. 1904"], ans: 0 },
+            { id: 285, q: "Điều kiện nào sau đây không phải là điều kiện đảm bảo cho độc lập dân tộc gắn liền với chủ nghĩa xã hội là?", opts: ["A. Phải bảo đảm vai trò lãnh đạo tuyệt đối của Đảng Cộng sản...", "B. Phải củng cố và tăng cường khối đại đoàn kết dân tộc...", "C. Phải đoàn kết, gắn bó chặt tiếp với cách mạng thế giới", "D. Phải giữ vững niềm tin vào chủ nghĩa Mác - Lênin"], ans: 3 },
+            { id: 286, q: "Trong Sách lược vắn tắt, Hồ Chí Minh xác định: Đảng cần phải thu phục bộ phận nào?", opts: ["A. Đại bộ phận dân cày", "B. Trung nông", "C. Công nhân", "D. Nông dân"], ans: 0 },
+            { id: 287, q: "Giai đoạn quan trọng nhất trong hình thành tư tưởng Hồ Chí Minh là", opts: ["A. Trước 1911", "B. 1911-1920", "C. 1920-1930", "D. 1930-1941"], ans: 2 },
+            { id: 288, q: "Tác phẩm “Sửa đổi lối làm việc”, bác Hồ viết dưới bút danh nào?", opts: ["A. T.L", "B. X.Y.Z", "C. Trần Lực", "D. Đ.X"], ans: 1 },
+            { id: 289, q: "Tác phẩm “Xây dựng những con người chủ nghĩa xã hội” được Bác viết năm nào?", opts: ["A. 1960", "B. 1965", "C. 1961", "D. 1969"], ans: 2 },
+            { id: 290, q: "Tác phẩm “Thưởng thức chính trị” bác viết dưới bút danh nào?", opts: ["A. T.L", "B. X.Y.Z", "C. Trần Lực", "D. Đ.X"], ans: 3 },
+            { id: 291, q: "Tìm đáp án sai, Nhà nước vì dân là nhà nước:", opts: ["A. Phục vụ nhân dân, đem lại lợi ích cho dân", "B. Chăm lo mọi mặt đời sống nhân dân", "C. Trong sạch, không được phép đặc quyền, đặc lợi", "D. Do dân làm chủ do dân tổ chức nên"], ans: 3 },
+            { id: 292, q: "Thuật ngữ “Tư tưởng Hồ Chí Minh” được dùng theo nghĩa nào?", opts: ["A. Là tư tưởng của một cá nhân", "B. Là tư tưởng của một lãnh tụ", "C. Là tư tưởng của một giai cấp, một dân tộc", "D. Là tất cả những vấn đề trên"], ans: 2 },
+            { id: 293, q: "Văn kiện Đại hội IX quan niệm: “Tư tưởng Hồ Chí Minh là một hệ thống quan điểm toàn diện và sâu sắc về những vấn đề cơ bản của [...] là kết quả của sự vận dụng và phát triển sáng tạo [..] Vào điều kiện cụ thể của nước ta...", opts: ["A. Cách mạng Việt Nam, chủ nghĩa Mác-Lênin", "B. Cách mạng vô sản, chủ nghĩa Mác-Lênin", "C. Cách mạng xã hội chủ nghĩa, chủ nghĩa mác-lênin", "D. Chủ nghĩa Mác Lênin, cách mạng Việt Nam"], ans: 0 },
+            { id: 294, q: "Khái niệm tư tưởng Hồ Chí Minh được Đảng ta chính thức sử dụng vào thời gian nào?", opts: ["A. 1930", "B. 1945", "C. 1969", "D. 1991"], ans: 3 },
+            { id: 295, q: "Tìm đáp án sai: Khái niệm tư tưởng Hồ Chí Minh mà đại hội IX(2001) nên bao gồm:", opts: ["A. Bản chất cách mạng và khoa học của tư tưởng Hồ Chí Minh", "B. Nguồn gốc tư tưởng, lý luận của tư tưởng Hồ Chí Minh", "C. Nội dung tư tưởng Hồ Chí Minh", "D. Kết cấu tư tưởng Hồ Chí Minh"], ans: 3 },
+            { id: 296, q: "Mục đích của tư tưởng Hồ Chí Minh là gì?", opts: ["A. Giải phóng dân tộc", "B. Giải phóng các dân tộc thuộc địa", "C. Giải phóng dân tộc giải, phóng giai cấp và giải phóng con người", "D. Giải phóng giai cấp và giải phóng con người"], ans: 2 },
+            { id: 297, q: "Đối tượng của bộ môn Tư Tưởng Hồ Chí Minh", opts: ["A. Quá trình sản sinh tư tưởng Hồ Chí Minh", "B. Quá trình hiện thực hóa tư tưởng Hồ Chí Minh", "C. Quá trình sản sinh và thực hiện hóa tư tưởng Hồ Chí Minh", "D. Quá trình Đảng Cộng sản vận dụng tư tưởng Hồ Chí Minh"], ans: 2 },
+            { id: 298, q: "Bộ môn Tư Tưởng Hồ Chí Minh hiện nay có mấy nhiệm vụ khi nghiên cứu Tư tưởng Hồ Chí Minh:", opts: ["A. 4 nhiệm vụ", "B. 5 nhiệm vụ", "C. 6 nhiệm vụ", "D. 7 nhiệm vụ"], ans: 2 },
+            { id: 299, q: "Tư tưởng Hồ Chí Minh có vị trí như thế nào trong hệ thống tư tưởng Đảng Cộng sản Việt Nam:", opts: ["A. Làm một bộ phận trong hệ thống tư tưởng của Đảng", "B. Là bộ phận quan trọng trong hệ thống tư tưởng của Đảng", "C. Là bộ phận rất quan trọng trong hệ thống tư tưởng của Đảng", "D. Là bộ phận nền tảng, kim chỉ nam cho hành động của Đảng"], ans: 3 },
+            { id: 300, q: "Vấn đề nào mà giáo trình Tư tưởng Hồ Chí Minh chưa nói khi nói về ý nghĩa học tập môn này đối với sinh viên?", opts: ["A. Nâng cao năng lực tư duy lý luận và các phương pháp công tác", "B. Bồi dưỡng phẩm chất đạo đức cách mạng và rèn luyện bản lĩnh chính trị", "C. Nâng cao lòng tự hào dân tộc, tự hào về Bác Hồ kính yêu", "D. Bồi dưỡng tình yêu thiên nhiên, ý thức bảo vệ môi trường"], ans: 3 },
+            { id: 301, q: "Theo Hồ Chí Minh học chủ nghĩa Mác Lênin để làm gì ?", opts: ["A. Học thuộc các luận điểm lý luận", "B. Để chứng tỏ trình độ lý luận", "C. Để sống với nhau có tình có nghĩa", "D. Cả a b và c đều sai"], ans: 2 },
+            { id: 302, q: "Điều mong muốn cuối cùng của Hồ Chí Minh ghi trong di chúc là gì ?", opts: ["A. Xây dựng một nước Việt Nam Phồn Vinh và Cường Thịnh", "B. Xây dựng một nước Việt Nam hòa bình, thống nhất, dân chủ, độc lập, giàu mạnh.", "C. Xây dựng một nước Việt Nam dân chủ, công bằng, văn minh", "D. Làm cho mọi người được hạnh phúc"], ans: 1 }
+        ];
+
+        let ALL_QUESTIONS = [...ORIGINAL_QUESTIONS];
+
+        const QUIZ_SETS = [
+            { id: 1, title: "Đề số 1", start: 0, end: 60 },
+            { id: 2, title: "Đề số 2", start: 60, end: 120 },
+            { id: 3, title: "Đề số 3", start: 120, end: 180 },
+            { id: 4, title: "Đề số 4", start: 180, end: 240 },
+            { id: 5, title: "Đề số 5", start: 240, end: 302 }
+        ];
+
+        function getActiveSession() {
+            try { return JSON.parse(localStorage.getItem('hcm_active_session')); }
+            catch(e) { return null; }
+        }
+
+        function saveActiveSession() {
+            if (state.view === 'quiz') {
+                const session = {
+                    questions: state.questions,
+                    userAnswers: state.userAnswers,
+                    currentIndex: state.currentIndex,
+                    setId: state.currentSetId,
+                    targetEndTime: state.targetEndTime,
+                    isShuffled: state.isShuffled
+                };
+                localStorage.setItem('hcm_active_session', JSON.stringify(session));
+            }
+        }
+
+        function clearActiveSession() {
+            localStorage.removeItem('hcm_active_session');
+        }
+
+        function listenToAdminOverrides() {
+            if (!window.db) return;
+
+            const overridesRef = window.doc(window.db, "Settings", "adminOverrides");
+            window.onSnapshot(overridesRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    let overrides = docSnap.data();
+                    localStorage.setItem('hcm_admin_overrides', JSON.stringify(overrides));
+                    if (typeof applyLocalOverrides === 'function') {
+                        applyLocalOverrides();
+                    }
+                    if (state.view === 'quiz' && typeof renderQuiz === 'function') {
+                        renderQuiz();
+                    }
+                }
+            });
+
+            const bannerRef = window.doc(window.db, "Settings", "banner");
+            window.onSnapshot(bannerRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.url !== undefined) {
+                        localStorage.setItem('hcm_banner_url', data.url);
+                        if (state.view === 'start' && typeof renderStart === 'function') {
+                            renderStart();
+                        }
+                    }
+                }
+            });
+        }
+
+        function applyLocalOverrides() {
+            let overrides = JSON.parse(localStorage.getItem('hcm_admin_overrides') || '{}');
+            ALL_QUESTIONS = ORIGINAL_QUESTIONS.map(q => {
+                if (overrides[q.id] !== undefined) {
+                    return { ...q, ans: overrides[q.id] };
+                }
+                return q;
+            });
+        }
+        
+        applyLocalOverrides();
+
+        let state = {
+            questions: [],
+            userAnswers: [],
+            currentIndex: 0,
+            timer: null,
+            targetEndTime: 0,
+            view: 'start',
+            currentSetId: null,
+            isShuffled: false,
+            adminCurrentSet: 1 
+        };
+
+        const appRoot = document.getElementById('app-root');
+        const headerTimer = document.getElementById('header-timer');
+        const timeDisplay = document.getElementById('time-display');
+        const globalModal = document.getElementById('global-modal');
+        const modalPanel = document.getElementById('modal-panel');
+        const modalBody = document.getElementById('modal-body');
+
+        function showModal(title, message, isConfirm, onConfirm) {
+            let btns = '';
+            if (isConfirm) {
+                btns = `
+                    <button onclick="closeModal()" class="px-4 py-2 min-w-[80px] bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition text-sm">Hủy bỏ</button>
+                    <button id="confirm-btn" class="px-4 py-2 min-w-[80px] bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 shadow-sm transition text-sm">Đồng ý</button>
+                `;
+            } else {
+                btns = `<button onclick="closeModal()" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 shadow-sm transition text-sm">Đã hiểu</button>`;
+            }
+
+            modalBody.innerHTML = `
+                <div class="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-${isConfirm ? 'indigo' : 'amber'}-100 mb-3">
+                    <i class="fas ${isConfirm ? 'fa-paper-plane text-indigo-600' : 'fa-exclamation-triangle text-amber-600'} text-base"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 mb-1">${title}</h3>
+                <p class="text-slate-500 mb-4 text-sm">${message}</p>
+                <div class="flex flex-row justify-center gap-2">
+                    ${btns}
+                </div>
+            `;
+
+            globalModal.classList.remove('hidden');
+            setTimeout(() => {
+                globalModal.classList.remove('opacity-0');
+                modalPanel.classList.remove('scale-95');
+            }, 10);
+
+            if (isConfirm) {
+                document.getElementById('confirm-btn').onclick = () => {
+                    closeModal();
+                    onConfirm();
+                };
+            }
+        }
+
+        function closeModal() {
+            globalModal.classList.add('opacity-0');
+            modalPanel.classList.add('scale-95');
+            setTimeout(() => globalModal.classList.add('hidden'), 300);
+        }
+        
+        function goHome() {
+            if (state.view === 'quiz') {
+                showModal("Lưu và Thoát", "Hệ thống sẽ lưu lại quá trình. Trở về trang chủ?", true, () => {
+                    if (state.timer) clearInterval(state.timer);
+                    headerTimer.classList.add('hidden');
+                    saveActiveSession();
+                    state.view = 'start';
+                    renderStart();
+                });
+            } else {
+                if (state.timer) clearInterval(state.timer);
+                headerTimer.classList.add('hidden');
+                state.view = 'start';
+                renderStart();
+            }
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (state.timer) clearInterval(state.timer);
+            headerTimer.classList.remove('hidden');
+            headerTimer.classList.add('flex');
+            
+            function updateTime() {
+                const now = Date.now();
+                const remaining = Math.max(0, Math.floor((state.targetEndTime - now) / 1000));
+                
+                timeDisplay.textContent = formatTime(remaining);
+                
+                if (remaining <= 300) { 
+                    headerTimer.classList.remove('bg-violet-50', 'text-violet-700');
+                    headerTimer.classList.add('bg-red-50', 'text-red-600');
+                } else {
+                    headerTimer.classList.add('bg-violet-50', 'text-violet-700');
+                    headerTimer.classList.remove('bg-red-50', 'text-red-600');
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(state.timer);
+                    submitQuiz(true);
+                }
+            }
+
+            updateTime();
+            state.timer = setInterval(updateTime, 1000);
+        }
+
+        function resumeQuiz() {
+            const session = getActiveSession();
+            if (!session) return;
+            
+            if (session.targetEndTime <= Date.now()) {
+                clearActiveSession();
+                showModal("Thông báo", "Bài làm đã hết thời gian và không thể tiếp tục.", false, null);
+                renderStart();
+                return;
+            }
+
+            state.questions = session.questions;
+            state.userAnswers = session.userAnswers;
+            state.currentIndex = session.currentIndex;
+            state.currentSetId = session.setId;
+            state.targetEndTime = session.targetEndTime;
+            state.isShuffled = session.isShuffled;
+            state.view = 'quiz';
+
+            renderQuiz();
+            startTimer();
+        }
+
+        function renderStart() {
+            const activeSession = getActiveSession();
+            const bannerUrl = localStorage.getItem('hcm_banner_url') || '';
+
+            let bannerHtml = '';
+            if (bannerUrl) {
+                bannerHtml = `
+                    <div class="w-full overflow-hidden shadow-sm border-b sm:border-b-0 border-slate-200 mb-0 bg-slate-100 flex-shrink-0">
+                        <img src="${bannerUrl}" class="w-full h-auto block" alt="Banner" onerror="this.style.display='none'">
+                    </div>
+                `;
+            }
+
+            let setsHtml = QUIZ_SETS.map(set => {
+                const isActive = activeSession && activeSession.setId === set.id;
+
+                let actionBtn = '';
+                if (isActive) {
+                    actionBtn = `<button onclick="resumeQuiz()" class="w-full py-2.5 mt-3 bg-amber-500 text-white font-bold text-sm rounded-lg hover:bg-amber-600 transition shadow-sm"><i class="fas fa-play-circle mr-1.5"></i>Tiếp tục</button>`;
+                } else {
+                   actionBtn = `<button onclick="checkAttemptAndStart(${set.id})" class="w-full py-2.5 mt-3 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 hover:shadow-md transition"><i class="fas fa-play mr-1.5"></i>Bắt đầu</button>`;
+                }
+
+                return `
+                    <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between h-full">
+                        <div>
+                            <div class="flex items-center gap-2 sm:gap-3 mb-3">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center text-base sm:text-lg font-black shrink-0">
+                                    ${set.id}
+                                </div>
+                                <h3 class="text-sm sm:text-lg font-extrabold text-slate-800">${set.title}</h3>
+                            </div>
+                            <div class="text-slate-500 font-medium text-[0.65rem] sm:text-xs flex gap-2 sm:gap-3 items-center">
+                                <span class="flex items-center gap-1"><i class="fas fa-list-ol text-violet-400"></i> ${set.end - set.start} câu</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-clock text-violet-400"></i> 40 phút</span>
+                            </div>
+                        </div>
+                        ${actionBtn}
+                    </div>
+                `;
+            }).join('');
+
+            appRoot.innerHTML = `
+                <div class="w-full flex-grow flex flex-col animate-fade-in">
+                    ${bannerHtml}
+                    
+                    <div class="w-full max-w-7xl mx-auto px-4 py-6 sm:p-6 lg:p-8 flex-grow flex flex-col">
+                        <div class="bg-white sm:rounded-[1.5rem] shadow-xl shadow-slate-200/50 p-4 sm:p-8 border-y sm:border border-slate-100 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-violet-500 to-fuchsia-500 hidden sm:block"></div>
+                            
+                            <h2 class="text-xl sm:text-3xl font-extrabold text-blue-700 text-center uppercase mb-5 sm:mb-8 mt-2 sm:mt-4 tracking-wide">DANH SÁCH ĐỀ THI</h2>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-4 mt-2">
+                                ${setsHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startQuiz(setId, isShuffled) {
+            clearActiveSession();
+            const setConfig = QUIZ_SETS.find(s => s.id === setId);
+            let subset = ALL_QUESTIONS.slice(setConfig.start, setConfig.end);
+
+           if (isShuffled) {
+                subset = shuffleQuizSubset(subset);
+            }
+
+            state.questions = subset;
+            state.view = 'quiz';
+            state.userAnswers = new Array(subset.length).fill(null);
+            state.currentIndex = 0;
+            state.currentSetId = setId;
+            state.isShuffled = isShuffled;
+            
+            state.targetEndTime = Date.now() + 40 * 60 * 1000;
+            
+            saveActiveSession();
+            renderQuiz();
+            startTimer();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function shuffleQuizSubset(subset) {
+            let cloned = JSON.parse(JSON.stringify(subset));
+            shuffleArray(cloned);
+            cloned.forEach(item => {
+                let correctText = item.opts[item.ans]; 
+                
+                let options = [
+                    { text: item.opts[0] },
+                    { text: item.opts[1] },
+                    { text: item.opts[2] },
+                    { text: item.opts[3] }
+                ];
+                
+                shuffleArray(options);
+                
+                item.opts[0] = options[0].text;
+                item.opts[1] = options[1].text;
+                item.opts[2] = options[2].text;
+                item.opts[3] = options[3].text;
+                
+                options.forEach((opt, idx) => {
+                    if (opt.text === correctText) {
+                        item.ans = idx;
+                    }
+                });
+            });
+            
+            return cloned;
+        }
+
+        function toggleMobileNav(forceClose = false) {
+            const sidebar = document.getElementById('quiz-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if (!sidebar || !overlay) return;
+            
+            if (forceClose || !sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    if (window.innerWidth < 1280) sidebar.style.visibility = 'hidden';
+                }, 300);
+            } else {
+                sidebar.style.visibility = 'visible';
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            }
+        }
+
+        function renderQuiz() {
+            const totalQs = state.questions.length;
+            const currentQ = state.questions[state.currentIndex];
+            const answeredCount = state.userAnswers.filter(a => a !== null).length;
+
+            let navHtml = '';
+            for (let i = 0; i < totalQs; i++) {
+                let btnClass = 'nav-btn w-full aspect-square flex items-center justify-center rounded-[4px] sm:rounded-[6px] font-bold cursor-pointer text-[10px] sm:text-[12px] transition-all duration-200 ';
+                if (i === state.currentIndex) {
+                    btnClass += ' bg-[#5465FF] text-white shadow-sm transform scale-105 z-10';
+                } else if (state.userAnswers[i] !== null) {
+                    btnClass += ' bg-indigo-100 text-[#5465FF]';
+                } else {
+                    btnClass += ' bg-slate-100 text-slate-600 hover:bg-slate-200';
+                }
+                navHtml += `<div class="${btnClass}" onclick="jumpTo(${i}); window.innerWidth < 1280 && toggleMobileNav(true);">${i + 1}</div>`;
+            }
+
+            const optionsHtml = currentQ.opts.map((optText, optIdx) => {
+                const isSelected = state.userAnswers[state.currentIndex] === optIdx;
+                const classSelected = isSelected 
+                    ? 'border-violet-500 bg-violet-50/70 shadow-sm' 
+                    : 'border-slate-200 hover:border-violet-200 bg-white';
+                
+                return `
+                    <label class="flex-1 flex items-center gap-3 px-3 sm:px-4 py-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${classSelected}" onclick="selectOption(${optIdx})">
+                        <input type="radio" name="option" class="hidden" ${isSelected ? 'checked' : ''}>
+                        <div class="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? 'border-violet-600 bg-white' : 'border-slate-300'}">
+                            ${isSelected ? '<div class="w-2.5 h-2.5 bg-violet-600 rounded-full"></div>' : ''}
+                        </div>
+                        <span class="text-slate-700 font-medium text-sm sm:text-[0.95rem] leading-snug w-full">${optText}</span>
+                    </label>
+                `;
+            }).join('');
+
+            appRoot.innerHTML = `
+                <div class="w-full max-w-7xl mx-auto px-4 py-6 sm:p-6 lg:p-8 flex-grow flex flex-col animate-fade-in">
+                    <div class="flex flex-col xl:flex-row gap-4 sm:gap-6 w-full flex-grow h-full xl:items-start justify-center">
+                        
+                        <div class="w-full xl:w-8/12 flex flex-col bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative flex-grow xl:h-[550px] shrink-0">
+                            
+                            <div class="h-14 sm:h-16 px-4 sm:px-5 border-b border-slate-100 flex justify-between items-center bg-white z-10 shrink-0">
+                                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-lg text-sm font-bold">
+                                    <i class="fas fa-flag"></i> Câu hỏi ${state.currentIndex + 1} / ${totalQs} 
+                                </div>
+                                
+                                <button onclick="toggleMobileNav()" class="xl:hidden w-9 h-9 rounded-lg bg-slate-50 text-slate-700 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 border border-slate-200 transition-colors shadow-sm">
+                                    <i class="fas fa-bars"></i>
+                                </button>
+                            </div>
+
+                            <div class="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden">
+                                <div class="h-[80px] sm:h-[90px] shrink-0 mb-3 flex items-start">
+                                    <h3 class="text-[1.05rem] sm:text-[1.15rem] font-bold text-slate-800 leading-relaxed line-clamp-3 w-full">
+                                        ${currentQ.q}
+                                    </h3>
+                                </div>
+                                
+                                <div class="flex-1 flex flex-col gap-2.5 sm:gap-3 min-h-0">
+                                    ${optionsHtml}
+                                </div>
+                            </div>
+
+                            <div class="h-16 sm:h-20 px-4 sm:px-6 border-t border-slate-100 flex justify-between items-center shrink-0 mt-auto bg-white">
+                                <button onclick="prevQuestion()" class="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition flex items-center gap-2 text-sm sm:text-base ${state.currentIndex === 0 ? 'invisible' : ''}">
+                                    <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Câu trước</span><span class="sm:hidden">Trước</span>
+                                </button>
+                                ${state.currentIndex === totalQs - 1 
+                                    ? `<button onclick="confirmSubmit()" class="px-5 py-2.5 bg-indigo-800 hover:bg-indigo-900 text-white font-bold rounded-xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">Nộp bài <i class="fas fa-paper-plane"></i></button>`
+                                    : `<button onclick="nextQuestion()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition flex items-center gap-2 shadow-sm text-sm sm:text-base">
+                                        <span class="hidden sm:inline">Câu tiếp</span><span class="sm:hidden">Tiếp</span> <i class="fas fa-arrow-right"></i>
+                                       </button>`
+                                }
+                            </div>
+                        </div>
+
+                        <div id="mobile-overlay" onclick="toggleMobileNav(true)" class="fixed inset-0 bg-slate-900/40 z-40 hidden xl:hidden backdrop-blur-sm opacity-0 transition-opacity duration-300"></div>
+
+                        <div id="quiz-sidebar" style="visibility: hidden;" class="fixed inset-y-0 right-0 z-50 w-[85%] max-w-[320px] bg-white shadow-2xl transform translate-x-full transition-transform duration-300 xl:relative xl:translate-x-0 xl:!visible xl:w-4/12 flex flex-col xl:rounded-3xl border-0 bg-transparent xl:bg-white xl:shadow-none overflow-hidden h-full xl:h-[550px]">
+                            
+                            <div class="p-3 border-b border-slate-100 xl:hidden flex justify-between items-center bg-white shrink-0">
+                                <h4 class="font-bold text-slate-800 text-[15px] flex items-center gap-2">
+                                    <i class="fas fa-list-ul text-[#7C3AED]"></i> Danh sách câu hỏi
+                                </h4>
+                                <button onclick="toggleMobileNav(true)" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+
+                            <div class="p-3 sm:p-4 flex flex-col h-full bg-white xl:shadow-sm xl:border xl:border-slate-200 xl:rounded-3xl overflow-y-auto xl:overflow-hidden justify-between">
+                                <div>
+                                    <div class="hidden xl:flex items-center mb-3 shrink-0">
+                                        <div class="w-8 h-8 rounded-xl bg-violet-50 text-[#7C3AED] flex items-center justify-center mr-2.5">
+                                            <i class="fas fa-th-large text-sm"></i>
+                                        </div>
+                                        <h4 class="font-bold text-slate-800 text-[14px]">Danh sách câu hỏi</h4>
+                                    </div>
+                                    
+                                    <div class="w-full relative flex flex-col">
+                                        <div class="grid grid-cols-6 gap-1 sm:gap-2">
+                                            ${navHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectOption(optIdx) {
+            state.userAnswers[state.currentIndex] = optIdx;
+            saveActiveSession();
+            renderQuiz(); 
+        }
+
+        function nextQuestion() {
+            if (state.currentIndex < state.questions.length - 1) {
+                state.currentIndex++;
+                saveActiveSession();
+                renderQuiz();
+            }
+        }
+
+        function prevQuestion() {
+            if (state.currentIndex > 0) {
+                state.currentIndex--;
+                saveActiveSession();
+                renderQuiz();
+            }
+        }
+
+        function jumpTo(idx) {
+            state.currentIndex = idx;
+            saveActiveSession();
+            renderQuiz();
+        }
+
+        function confirmSubmit() {
+            const unanswered = state.userAnswers.filter(a => a === null).length;
+            let msg = "Bạn có chắc chắn muốn nộp bài không?";
+            if (unanswered > 0) {
+                msg = `Bạn còn <strong class="text-red-500">${unanswered} câu</strong> chưa làm. Bạn vẫn nộp chứ?`;
+            }
+            showModal("Xác nhận", msg, true, () => submitQuiz(false));
+        }
+
+        function submitQuiz(isTimeout = false) {
+            if(state.timer) clearInterval(state.timer);
+            headerTimer.classList.add('hidden');
+            
+            if (isTimeout) {
+                showModal("Hết giờ", "Đã hết thời gian! Hệ thống tự thu bài.", false, null);
+            }
+            
+            clearActiveSession();
+            state.view = 'result';
+            renderResult();
+        }
+
+        function renderResult() {
+            let correct = 0;
+            let unanswered = 0;
+            const totalQs = state.questions.length;
+            
+            state.questions.forEach((q, i) => {
+                if (state.userAnswers[i] === null) {
+                    unanswered++;
+                } else if (state.userAnswers[i] === q.ans) {
+                    correct++;
+                }
+            });
+            
+            let incorrect = totalQs - correct - unanswered;
+            let score10 = ((correct / totalQs) * 10).toFixed(1);
+            let gradeColor = score10 >= 5 ? 'text-emerald-500' : 'text-rose-500';
+
+            appRoot.innerHTML = `
+                <div class="w-full max-w-7xl mx-auto px-4 py-6 sm:p-6 lg:p-8 animate-fade-in flex-grow flex flex-col">
+                    <div class="max-w-3xl mx-auto w-full mt-0 sm:mt-4 mb-10">
+                        <div class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
+                            
+                            <div class="bg-white p-8 sm:p-10 text-center relative border-b border-slate-100">
+                                <div class="inline-flex items-center justify-center w-14 h-14 bg-violet-50 rounded-full mb-3 shadow-sm border border-violet-100">
+                                    <i class="fas fa-award text-2xl text-violet-600"></i>
+                                </div>
+                                <h2 class="text-2xl font-extrabold text-slate-800 mb-1">Kết Quả Bài Thi</h2>
+                                <p class="text-slate-500 font-medium text-sm">Đề số ${state.currentSetId} • ${totalQs} Câu</p>
+                                <div class="mt-4 mb-1 flex items-baseline justify-center gap-1">
+                                    <span class="text-5xl sm:text-6xl font-black ${gradeColor} drop-shadow-sm leading-none">${score10}</span>
+                                    <span class="text-xl text-slate-300 font-bold">/10</span>
+                                </div>
+                            </div>
+
+                            <div class="p-5 sm:p-8 bg-slate-50/30">
+                                <div class="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                                    <div onclick="renderReview('correct')" class="bg-white rounded-xl p-3 sm:p-5 flex flex-col items-center justify-center border border-slate-200 cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-all shadow-sm">
+                                        <div class="text-2xl sm:text-3xl font-bold text-emerald-500 mb-1 leading-none">${correct}</div>
+                                        <div class="text-[0.6rem] sm:text-xs font-bold text-slate-500 uppercase tracking-widest text-center">ĐÚNG</div>
+                                    </div>
+                                    
+                                    <div onclick="renderReview('incorrect')" class="bg-white rounded-xl p-3 sm:p-5 flex flex-col items-center justify-center border border-slate-200 cursor-pointer hover:border-rose-300 hover:shadow-sm transition-all shadow-sm">
+                                        <div class="text-2xl sm:text-3xl font-bold text-rose-500 mb-1 leading-none">${incorrect}</div>
+                                        <div class="text-[0.6rem] sm:text-xs font-bold text-slate-500 uppercase tracking-widest text-center">SAI</div>
+                                    </div>
+                                    
+                                    <div onclick="renderReview('unanswered')" class="bg-white rounded-xl p-3 sm:p-5 flex flex-col items-center justify-center border border-slate-200 cursor-pointer hover:border-slate-400 hover:shadow-sm transition-all shadow-sm">
+                                        <div class="text-2xl sm:text-3xl font-bold text-slate-400 mb-1 leading-none">${unanswered}</div>
+                                        <div class="text-[0.6rem] sm:text-xs font-bold text-slate-500 uppercase tracking-widest text-center">BỎ TRỐNG</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col sm:flex-row justify-center gap-3">
+                                    <button onclick="renderReview('all')" class="w-full sm:w-auto px-6 py-3 bg-white text-violet-700 font-bold rounded-xl hover:bg-violet-50 transition flex items-center justify-center gap-2 border border-violet-200 shadow-sm text-sm sm:text-base">
+                                        <i class="fas fa-search"></i> Xem lại chi tiết
+                                    </button>
+                                    <button onclick="goHome()" class="w-full sm:w-auto px-6 py-3 bg-indigo-800 text-white font-bold rounded-xl hover:bg-indigo-900 shadow-sm transition flex items-center justify-center gap-2 text-sm sm:text-base">
+                                        <i class="fas fa-list"></i> Về danh sách đề
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function scrollToTopReview() {
+            const container = document.getElementById('review-container');
+            if (container) {
+                const y = container.getBoundingClientRect().top + window.scrollY - 100; 
+                window.scrollTo({top: y, behavior: 'smooth'});
+            } else {
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        }
+
+        function renderReview(filter = 'all') {
+            let filterTitle = "Chi tiết";
+            let filterIcon = "fa-clipboard-check text-indigo-500";
+            
+            if(filter === 'correct') {
+                filterTitle = "Câu ĐÚNG";
+                filterIcon = "fa-check-circle text-emerald-500";
+            } else if (filter === 'incorrect') {
+                filterTitle = "Câu SAI";
+                filterIcon = "fa-times-circle text-rose-500";
+            } else if (filter === 'unanswered') {
+                filterTitle = "Câu BỎ TRỐNG";
+                filterIcon = "fa-minus-circle text-slate-600";
+            }
+
+            let reviewList = state.questions.map((q, qIdx) => {
+                const userAns = state.userAnswers[qIdx];
+                const isCorrect = userAns === q.ans;
+                const isSkipped = userAns === null;
+                const isIncorrect = !isCorrect && !isSkipped;
+                
+                if (filter === 'correct' && !isCorrect) return '';
+                if (filter === 'incorrect' && !isIncorrect) return '';
+                if (filter === 'unanswered' && !isSkipped) return '';
+
+                let titleColor = isCorrect ? 'text-emerald-600' : (isSkipped ? 'text-slate-600' : 'text-rose-600');
+                let icon = isCorrect ? '<i class="fas fa-check-circle mr-2"></i>' : (isSkipped ? '<i class="fas fa-minus-circle mr-2"></i>' : '<i class="fas fa-times-circle mr-2"></i>');
+
+                let optsHtml = q.opts.map((optText, oIdx) => {
+                    let classes = "flex items-start gap-2.5 p-2.5 rounded-lg border text-sm sm:text-[0.95rem] mb-2 font-medium ";
+                    let optIcon = `<div class="w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0 mt-0.5"></div>`;
+                    
+                    if (oIdx === q.ans) {
+                        classes += "border-emerald-400 bg-emerald-50 text-emerald-800 shadow-sm";
+                        optIcon = `<i class="fas fa-check-circle text-emerald-500 text-lg flex-shrink-0"></i>`;
+                    } else if (oIdx === userAns) {
+                        classes += "border-rose-300 bg-rose-50 text-rose-800 shadow-sm";
+                        optIcon = `<i class="fas fa-times-circle text-rose-500 text-lg flex-shrink-0"></i>`;
+                    } else {
+                        classes += "border-slate-100 bg-slate-50 text-slate-600";
+                    }
+
+                    return `<div class="${classes}">${optIcon}<span>${optText}</span></div>`;
+                }).join('');
+
+                return `
+                    <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 mb-4">
+                        <h4 class="text-[0.95rem] sm:text-base font-bold mb-3 ${titleColor} flex items-start leading-snug">
+                            <span class="mr-1 mt-0.5">${icon}</span>
+                            <span>Câu ${qIdx + 1}: ${q.q}</span>
+                        </h4>
+                        <div class="pl-0 sm:pl-6">
+                            ${optsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            if(reviewList.trim() === '') {
+                reviewList = `
+                <div class="bg-white p-6 text-center rounded-xl shadow-sm border border-slate-200 mb-4">
+                    <i class="fas fa-box-open text-4xl text-slate-300 mb-3"></i>
+                    <p class="text-slate-500 text-sm font-normal">Không có câu hỏi nào trong mục này.</p>
+                </div>`;
+            }
+
+            appRoot.innerHTML = `
+                <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:p-8 animate-fade-in pb-10 flex-grow flex flex-col">
+                    <div id="review-container" class="max-w-3xl mx-auto w-full pt-2 relative">
+                        <div class="flex flex-row justify-between items-center mb-5 gap-2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-xl shadow-sm border border-slate-200 sticky top-[64px] z-30">
+                            <h2 class="text-base sm:text-lg font-bold text-slate-800 truncate"><i class="fas ${filterIcon} mr-1.5"></i> <span class="hidden sm:inline">${filterTitle}</span></h2>
+                            <div class="flex gap-2 shrink-0">
+                                <button onclick="renderResult()" class="px-3 py-1.5 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition text-sm flex items-center gap-1.5">
+                                    <i class="fas fa-arrow-left"></i> Quay lại
+                                </button>
+                                <button onclick="scrollToTopReview()" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition text-sm flex items-center gap-1.5">
+                                    <i class="fas fa-arrow-up"></i> Lên đầu
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            ${reviewList}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openAdminLogin() {
+            modalBody.innerHTML = `
+                <div class="relative">
+                    <button onclick="closeModal()" class="absolute -top-3 -right-2 text-slate-400 hover:text-slate-600 font-bold text-lg w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+                        &times;
+                    </button>
+                    <div class="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-900 mb-3 border border-blue-100">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-blue-950 mb-1">Quản trị Hệ thống</h3>
+                    <p class="text-slate-500 mb-4 text-xs">Vui lòng đăng nhập tài khoản Admin.</p>
+                    <div class="flex flex-col gap-2.5">
+                        <input type="email" id="admin-email" placeholder="Nhập Email admin..." onkeydown="if(event.key === 'Enter') checkAdminPwd()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-900">
+                        <input type="password" id="admin-pwd" placeholder="Nhập Mật khẩu..." onkeydown="if(event.key === 'Enter') checkAdminPwd()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-900">
+                        <div id="admin-err" class="text-rose-500 text-[0.75rem] hidden font-medium mt-1 leading-snug"></div>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="closeModal()" class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition">Hủy</button>
+                            <button onclick="checkAdminPwd()" id="btn-login" class="flex-1 px-3 py-2 bg-blue-950 text-white font-semibold text-sm rounded-lg hover:bg-blue-900 transition">Đăng nhập</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            globalModal.classList.remove('hidden');
+            setTimeout(() => {
+                globalModal.classList.remove('opacity-0');
+                modalPanel.classList.remove('scale-95');
+                document.getElementById('admin-email').focus();
+            }, 10);
+        }
+
+        async function checkAdminPwd() {
+            const emailInput = document.getElementById('admin-email').value.trim();
+            const pwdInput = document.getElementById('admin-pwd').value;
+            const errDiv = document.getElementById('admin-err');
+            const btnLogin = document.getElementById('btn-login');
+
+            if (!emailInput || !pwdInput) {
+                errDiv.innerText = "Vui lòng nhập đầy đủ Email và Mật khẩu!";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            btnLogin.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btnLogin.disabled = true;
+            errDiv.classList.add('hidden');
+
+            try {
+                if (!window.firebaseAuth) {
+                    throw new Error("Firebase chưa được khởi tạo. Hãy điền firebaseConfig ở đầu file HTML.");
+                }
+
+                const userCredential = await window.signInWithEmailAndPassword(window.firebaseAuth, emailInput, pwdInput);
+                const user = userCredential.user;
+
+                if (user.email === 'hsttdna@gmail.com') {
+                    closeModal();
+                    renderAdminView();
+                } else {
+                    await window.signOut(window.firebaseAuth);
+                    errDiv.innerText = "Tài khoản không có quyền Admin!";
+                    errDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Lỗi đăng nhập:", error);
+                
+                if(error.message.includes("Firebase chưa được khởi tạo")) {
+                    errDiv.innerText = "Lỗi hệ thống: Chưa cấu hình FirebaseConfig.";
+                } else {
+                    errDiv.innerText = "Sai Email hoặc Mật khẩu!";
+                }
+                
+                errDiv.classList.remove('hidden');
+            } finally {
+                btnLogin.innerHTML = 'Đăng nhập';
+                btnLogin.disabled = false;
+            }
+        }
+        
+        window.changeAdminSet = function(setId) {
+            state.adminCurrentSet = parseInt(setId);
+            renderAdminView();
+        };
+
+        function renderAdminView() {
+            state.view = 'admin';
+            let overrides = JSON.parse(localStorage.getItem('hcm_admin_overrides') || '{}');
+            let bannerUrl = localStorage.getItem('hcm_banner_url') || '';
+            
+            if (!state.adminCurrentSet) state.adminCurrentSet = QUIZ_SETS[0].id;
+            let currentSet = QUIZ_SETS.find(s => s.id === state.adminCurrentSet) || QUIZ_SETS[0];
+            
+            let questionsToShow = ALL_QUESTIONS.slice(currentSet.start, currentSet.end);
+
+            let qHtml = questionsToShow.map((q, idx) => {
+                const hasOverride = overrides[q.id] !== undefined;
+                
+                let optionsHtml = q.opts.map((opt, oIdx) => {
+                    let isAns = q.ans === oIdx;
+                    return `
+                        <label class="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer border transition-all option-label-${q.id} ${isAns ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : 'border-transparent'}" id="label-q${q.id}-opt${oIdx}">
+                            <input type="radio" name="admin_q_${q.id}" value="${oIdx}" ${isAns ? 'checked' : ''} onchange="handleAdminOptionSelect(${q.id}, ${oIdx})" class="mt-1 w-4 h-4 text-violet-600 cursor-pointer flex-shrink-0">
+                            <span class="text-[0.95rem] leading-snug ${isAns ? 'font-bold text-emerald-800' : 'text-slate-700 font-medium'}">${opt}</span>
+                        </label>
+                    `;
+                }).join('');
+                
+                return `
+                    <div class="p-5 border-b border-slate-200 hover:bg-slate-50/30 transition bg-white" id="admin-row-${q.id}">
+                        <div class="flex justify-between items-start sm:items-center flex-col sm:flex-row mb-3 gap-3">
+                            <div class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                Câu ${q.id} 
+                                ${hasOverride ? '<span class="text-[0.65rem] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md font-bold shadow-sm uppercase tracking-wider"><i class="fas fa-pen mr-1"></i>Đã sửa</span>' : ''}
+                            </div>
+                            <button onclick="saveOverride(${q.id})" id="btn-save-${q.id}" class="hidden px-5 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm text-sm items-center gap-2 w-full sm:w-auto justify-center">
+                                <i class="fas fa-save"></i> Lưu đáp án
+                            </button>
+                        </div>
+                        <p class="text-slate-800 font-medium mb-4 text-[1.05rem] leading-relaxed">${q.q}</p>
+                        <div class="flex flex-col gap-1.5">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            let dropdownHtml = QUIZ_SETS.map(set => {
+                let isSelected = (state.adminCurrentSet === set.id) ? 'selected' : '';
+                return `<option value="${set.id}" ${isSelected}>${set.title} (Từ câu ${set.start + 1} - ${set.end})</option>`;
+            }).join('');
+
+            appRoot.innerHTML = `
+                <div class="w-full max-w-7xl mx-auto px-4 py-6 sm:p-6 lg:p-8 flex-grow flex flex-col animate-fade-in">
+                    <div class="w-full max-w-4xl mx-auto sm:mt-4 mb-0 sm:mb-10 px-0 sm:px-2 flex-grow flex flex-col">
+                        <div class="bg-white sm:rounded-xl shadow-lg p-3 sm:p-4 border-y sm:border border-slate-200 flex-grow flex flex-col">
+                            <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-4 gap-2 shrink-0">
+                                <h2 class="text-base sm:text-lg font-black text-slate-800 flex items-center">
+                                    <i class="fas fa-tools text-slate-500 mr-2"></i> Bảng Điều Khiển Admin
+                                </h2>
+                                <button onclick="handleAdminLogout()" class="px-3 py-1.5 bg-rose-600 text-white font-bold rounded-lg hover:bg-rose-700 transition text-xs flex items-center gap-1.5 shrink-0">
+                                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                </button>
+                            </div>
+                            
+                            <div class="mb-4 p-3 bg-violet-50/50 border border-violet-100 rounded-lg shrink-0">
+                                <label class="block text-sm font-bold text-violet-800 mb-2">
+                                    <i class="fas fa-image mr-1"></i> Cài đặt Banner trang chủ (Link ảnh)
+                                </label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="admin-banner-input" value="${bannerUrl}" placeholder="Nhập link ảnh (VD: https://imgur.com/anh.jpg)" class="flex-1 px-3 py-2 border border-violet-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-300 transition">
+                                    <button onclick="saveBannerUrl(this)" class="px-4 py-2 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 text-sm whitespace-nowrap transition shadow-sm flex items-center gap-1.5">
+                                        Lưu Banner
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <label class="font-bold text-slate-700 text-sm">
+                                    <i class="fas fa-filter text-violet-500 mr-1"></i> Chọn đề thi để sửa:
+                                </label>
+                                <select onchange="changeAdminSet(this.value)" class="w-full sm:w-auto px-3 py-2 border border-slate-300 rounded-lg bg-white font-medium text-sm focus:outline-none focus:border-violet-500 transition shadow-sm cursor-pointer">
+                                    ${dropdownHtml}
+                                </select>
+                            </div>
+
+                            <h3 class="text-sm font-bold text-slate-700 mb-2 shrink-0"><i class="fas fa-list-check mr-1"></i> Quản lý đáp án</h3>
+                            <div class="bg-slate-50 rounded-lg border border-slate-200 overflow-y-auto flex-grow" style="max-height: 50vh;">
+                                ${qHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function handleAdminLogout() {
+            try {
+                if(window.firebaseAuth) {
+                    await window.signOut(window.firebaseAuth);
+                }
+            } catch (error) {
+                console.error("Lỗi đăng xuất:", error);
+            }
+            goHome(); 
+        }
+
+        async function saveBannerUrl(btn) {
+            const url = document.getElementById('admin-banner-input').value.trim();
+            localStorage.setItem('hcm_banner_url', url);
+            
+            if (window.db) {
+                try {
+                    const bannerRef = window.doc(window.db, "Settings", "banner");
+                    await window.setDoc(bannerRef, { url: url }, { merge: true });
+                } catch (error) {
+                    console.error("Lỗi đồng bộ banner lên Firebase:", error);
+                }
+            }
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1"></i> Đã lưu';
+            btn.classList.replace('bg-violet-600', 'bg-emerald-600');
+            btn.classList.replace('hover:bg-violet-700', 'hover:bg-emerald-700');
+            
+            setTimeout(() => {
+                btn.innerHTML = 'Lưu Banner';
+                btn.classList.replace('bg-emerald-600', 'bg-violet-600');
+                btn.classList.replace('hover:bg-emerald-700', 'hover:bg-violet-700');
+            }, 2000);
+        }
+
+        window.handleAdminOptionSelect = function(qId, oIdx) {
+            const saveBtn = document.getElementById(`btn-save-${qId}`);
+            if (saveBtn) {
+                saveBtn.classList.remove('hidden');
+                saveBtn.classList.add('flex');
+            }
+            
+            const labels = document.querySelectorAll(`.option-label-${qId}`);
+            labels.forEach((label, idx) => {
+                const textSpan = label.querySelector('span');
+                if (idx === oIdx) {
+                    label.classList.add('border-blue-300', 'bg-blue-50/50', 'shadow-sm');
+                    label.classList.remove('border-transparent', 'border-emerald-300', 'bg-emerald-50/50');
+                    textSpan.classList.add('font-bold', 'text-blue-800');
+                    textSpan.classList.remove('text-emerald-800', 'text-slate-700');
+                } else {
+                    label.classList.remove('border-blue-300', 'bg-blue-50/50', 'border-emerald-300', 'bg-emerald-50/50', 'shadow-sm');
+                    label.classList.add('border-transparent');
+                    textSpan.classList.remove('font-bold', 'text-blue-800', 'text-emerald-800');
+                    textSpan.classList.add('text-slate-700', 'font-medium');
+                }
+            });
+        };
+
+        window.saveOverride = function(qId) {
+            const selectedRadio = document.querySelector(`input[name="admin_q_${qId}"]:checked`);
+            if (!selectedRadio) return;
+            const newAnsIdx = parseInt(selectedRadio.value);
+
+            let overrides = JSON.parse(localStorage.getItem('hcm_admin_overrides') || '{}');
+            const originalQ = ORIGINAL_QUESTIONS.find(q => q.id === qId);
+            
+            if (originalQ && originalQ.ans === newAnsIdx) {
+                delete overrides[qId];
+            } else {
+                overrides[qId] = newAnsIdx;
+            }
+            
+            localStorage.setItem('hcm_admin_overrides', JSON.stringify(overrides));
+            applyLocalOverrides();
+            
+            const saveBtn = document.getElementById(`btn-save-${qId}`);
+            if(saveBtn) {
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang lưu...';
+                saveBtn.disabled = true;
+            }
+
+            if (window.db) {
+                const overridesRef = window.doc(window.db, "Settings", "adminOverrides");
+                window.setDoc(overridesRef, overrides).then(() => {
+                    if(saveBtn) {
+                        saveBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Đã lưu';
+                        saveBtn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+                        setTimeout(() => renderAdminView(), 800);
+                    }
+                }).catch(err => {
+                    console.error("Lỗi khi lưu đáp án:", err);
+                    alert("Không thể đồng bộ đáp án. Hãy kiểm tra lại kết nối Firebase!");
+                    if(saveBtn) {
+                        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Lưu đáp án';
+                        saveBtn.disabled = false;
+                    }
+                });
+            } else {
+                 setTimeout(() => renderAdminView(), 400);
+            }
+        };
+
+        window.onload = () => {
+            renderStart();
+            setTimeout(listenToAdminOverrides, 500);
+        };
+
+        function checkAttemptAndStart(setId) {
+            let key = 'quiz_attempt_set_' + setId;
+            let attemptCount = parseInt(localStorage.getItem(key) || '0');
+            
+            attemptCount++;
+            localStorage.setItem(key, attemptCount);
+
+            if (attemptCount === 1) {
+                startQuiz(setId, false);
+            } else {
+                showModeSelectionModal(setId);
+            }
+        }
+
+        function showModeSelectionModal(setId) {
+            let modal = document.getElementById('mode-selection-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'mode-selection-modal';
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl shadow-xl max-w-xs w-full text-center relative">
+                        <button id="btn-close-modal" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 font-bold text-lg w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition">
+                            &times;
+                        </button>
+                        
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 mt-1">Chọn chế độ làm bài</h3>
+                        <div class="flex gap-3">
+                            <button id="btn-original" class="flex-1 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm rounded-xl transition">Đề gốc</button>
+                            <button id="btn-shuffled" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition">Đảo đề</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            } else {
+                modal.classList.remove('hidden');
+            }
+
+            document.getElementById('btn-close-modal').onclick = function() {
+                modal.classList.add('hidden');
+            };
+
+            document.getElementById('btn-original').onclick = function() {
+                modal.classList.add('hidden');
+                startQuiz(setId, false);
+            };
+
+            document.getElementById('btn-shuffled').onclick = function() {
+                modal.classList.add('hidden');
+                startQuiz(setId, true);
+            };
+        }
+
+        window.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) {
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('wheel', function (e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
